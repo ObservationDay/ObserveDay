@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthenticateParticipantJwt;
 use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
             'role' => EnsureUserHasRole::class,
+            'participant.jwt' => AuthenticateParticipantJwt::class,
         ]);
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : route('login'));
     })

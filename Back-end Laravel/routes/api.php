@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\FormateurController;
 use App\Http\Controllers\Api\V1\IntegrationController;
+use App\Http\Controllers\Api\V1\ParticipantPortalController;
 use App\Http\Controllers\Api\V1\ParticipantRefController;
 use App\Http\Controllers\Api\V1\RegistrationController;
 use App\Http\Controllers\Api\V1\WorkshopController;
@@ -16,6 +17,9 @@ Route::get('/user', function (Request $request) {
 
 Route::prefix('v1')->group(function (): void {
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::get('/participant/ateliers', [ParticipantPortalController::class, 'workshops']);
+    Route::post('/participant/inscriptions', [ParticipantPortalController::class, 'register'])
+        ->middleware('participant.jwt');
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/auth/me', [AuthController::class, 'me']);
@@ -40,26 +44,12 @@ Route::prefix('v1')->group(function (): void {
         });
 
         Route::prefix('integration')
-            ->middleware('abilities:catalog:read')
-            ->group(function (): void {
-                Route::get('/ateliers', [IntegrationController::class, 'workshops']);
-                Route::get('/ateliers/{workshop}', [IntegrationController::class, 'workshop']);
-            });
-
-        Route::prefix('integration')
             ->middleware('abilities:registrations:read')
             ->group(function (): void {
                 Route::get(
                     '/participants/{participantId}/inscriptions',
                     [IntegrationController::class, 'participantRegistrations'],
                 )->whereUuid('participantId');
-            });
-
-        Route::prefix('integration')
-            ->middleware('abilities:registrations:write')
-            ->group(function (): void {
-                Route::post('/inscriptions', [IntegrationController::class, 'register']);
-                Route::patch('/inscriptions/{registration}/annulation', [IntegrationController::class, 'cancelRegistration']);
             });
     });
 });

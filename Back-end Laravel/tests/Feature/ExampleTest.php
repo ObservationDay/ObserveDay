@@ -51,15 +51,15 @@ class ExampleTest extends TestCase
             'role' => 'admin',
         ]);
         $admin->id = (string) Str::uuid();
-        Sanctum::actingAs($admin, ['catalog:read', 'registrations:write']);
+        Sanctum::actingAs($admin, ['registrations:read']);
         $admin->withAccessToken(new PersonalAccessToken([
-            'abilities' => ['catalog:read', 'registrations:write'],
+            'abilities' => ['registrations:read'],
         ]));
 
         $this->postJson('/api/v1/ateliers', [])
             ->assertForbidden();
 
-        $this->getJson('/api/v1/integration/participants/'.Str::uuid().'/inscriptions')
+        $this->getJson('/api/v1/participants')
             ->assertForbidden();
     }
 }

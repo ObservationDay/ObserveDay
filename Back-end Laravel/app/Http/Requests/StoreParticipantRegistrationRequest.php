@@ -6,7 +6,7 @@ use App\Models\Workshop;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreRegistrationRequest extends FormRequest
+class StoreParticipantRegistrationRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -17,9 +17,6 @@ class StoreRegistrationRequest extends FormRequest
     {
         return [
             'workshop_id' => ['required', 'uuid', Rule::exists(Workshop::class, 'id')],
-            'participant_id' => ['required', 'uuid'],
-            'nom_affiche' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:255'],
         ];
     }
 }

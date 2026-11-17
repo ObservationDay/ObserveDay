@@ -24,6 +24,16 @@ def _participant_json(participant):
     }
 
 
+def _participant_access_token(participant):
+    return create_access_token(
+        identity=str(participant.id),
+        additional_claims={
+            "participant_name": participant.nom,
+            "participant_email": participant.email,
+        },
+    )
+
+
 def _validation_error(errors):
     return (
         jsonify({"message": "The given data was invalid.", "errors": errors}),
@@ -100,7 +110,7 @@ def register_participant():
 
     return jsonify(
         {
-            "access_token": create_access_token(identity=str(participant.id)),
+            "access_token": _participant_access_token(participant),
             "token_type": "Bearer",
             "participant": _participant_json(participant),
         }
@@ -129,7 +139,7 @@ def login():
 
     return jsonify(
         {
-            "access_token": create_access_token(identity=str(participant.id)),
+            "access_token": _participant_access_token(participant),
             "token_type": "Bearer",
             "participant": _participant_json(participant),
         }
@@ -145,16 +155,6 @@ def current_participant():
     return jsonify({"data": _participant_json(participant)})
 
 
-@api.get("/ateliers")
-def list_workshops():
-    return _proxy_laravel("GET", "integration/ateliers")
-
-
-@api.get("/ateliers/<uuid:workshop_id>")
-def show_workshop(workshop_id):
-    return _proxy_laravel("GET", f"integration/ateliers/{workshop_id}")
-
-
 @api.get("/inscriptions")
 @jwt_required()
 def list_participant_registrations():
@@ -165,34 +165,4 @@ def list_participant_registrations():
     return _proxy_laravel(
         "GET",
         f"integration/participants/{participant.id}/inscriptions",
-    )
-
-
-@api.post("/inscriptions")
-@jwt_required()
-def register_for_workshop():
-    participant, error = _require_current_participant()
-    if error:
-        return error
-
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
-        return _validation_error({"body": ["A JSON object is required."]})
-
-    try:
-        workshop_id = UUID(payload.get("workshop_id", ""))
-    except (TypeError, ValueError):
-        return _validation_error(
-            {"workshop_id": ["A valid workshop UUID is required."]}
-        )
-
-    return _proxy_laravel(
-        "POST",
-        "integration/inscriptions",
-        payload={
-            "workshop_id": str(workshop_id),
-            "participant_id": str(participant.id),
-            "nom_affiche": participant.nom,
-            "email": participant.email,
-        },
     )

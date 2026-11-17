@@ -2,6 +2,7 @@ import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { Router } from '@angular/router';
 
 import { API_BASE_URL, PARTICIPANT_API_BASE_URL } from './api-config';
 import { AuthInterceptor } from './auth.interceptor';
@@ -57,6 +58,53 @@ describe('ParticipantApiService', () => {
 
     expect(participantAuth.token).toBe('participant-token');
     expect(participantAuth.currentParticipant?.id).toBe('participant-id');
+  });
+
+  it('loads the available workshop catalog directly from Laravel', () => {
+    staffAuth.login({ email: 'admin@example.com', password: 'admin-password' }).subscribe();
+    httpMock.expectOne(`${API_BASE_URL}/auth/login`).flush({
+      access_token: 'staff-token',
+      token_type: 'Bearer',
+      user: {
+        id: 'staff-id',
+        nom: 'Admin',
+        email: 'admin@example.com',
+        role: 'admin',
+      },
+    });
+
+    api.listAvailableWorkshops().subscribe();
+
+    const request = httpMock.expectOne(`${API_BASE_URL}/participant/ateliers`);
+    expect(request.request.method).toBe('GET');
+    expect(request.request.headers.has('Authorization')).toBeFalse();
+    request.flush({ data: [], links: {}, meta: { total: 0 } });
+  });
+
+  it('does not clear staff authentication when a participant API request returns 401', () => {
+    staffAuth.login({ email: 'admin@example.com', password: 'admin-password' }).subscribe();
+    httpMock.expectOne(`${API_BASE_URL}/auth/login`).flush({
+      access_token: 'staff-token',
+      token_type: 'Bearer',
+      user: {
+        id: 'staff-id',
+        nom: 'Admin',
+        email: 'admin@example.com',
+        role: 'admin',
+      },
+    });
+
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    TestBed.inject(HttpClient)
+      .get(`${API_BASE_URL}/participant/ateliers`)
+      .subscribe({ error: () => undefined });
+
+    const request = httpMock.expectOne(`${API_BASE_URL}/participant/ateliers`);
+    request.flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    expect(staffAuth.isAuthenticated).toBeTrue();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('restores staff authentication in another tab', () => {
@@ -129,7 +177,7 @@ describe('ParticipantApiService', () => {
     });
 
     api.registerForWorkshop('workshop-id').subscribe();
-    const request = httpMock.expectOne(`${PARTICIPANT_API_BASE_URL}/inscriptions`);
+    const request = httpMock.expectOne(`${API_BASE_URL}/participant/inscriptions`);
     expect(request.request.headers.get('Authorization')).toBe('Bearer participant-token');
     expect(request.request.headers.get('Authorization')).not.toBe('Bearer staff-token');
     expect(request.request.body).toEqual({ workshop_id: 'workshop-id' });

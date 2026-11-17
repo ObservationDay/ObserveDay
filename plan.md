@@ -26,10 +26,11 @@ Use the framework-compatible dependency ranges above, then commit the generated 
 ## Architecture and data ownership
 
 - **Laravel is authoritative** for workshops, trainers, and registrations. Its API serves the admin/trainer workflows and workshop catalog.
-- **Flask owns participant account creation and credentials.** It calls Laravel's API to browse workshops and submit registrations; it does not read Laravel's database directly.
-- To make Laravel's trainer/admin participant lists possible without cross-service database joins, Flask sends the participant's stable ID and required display details to Laravel as part of the registration flow. Laravel stores the minimal participant projection alongside the registration.
+- **Flask owns participant account creation and credentials.** It issues signed participant JWTs and serves account, login, and registration-history requests; it does not read Laravel's database directly.
+- Angular calls Laravel directly to browse workshops and submit registrations. Laravel verifies the participant JWT using a shared server-side signing secret and derives participant identity/profile from its signed claims.
+- To make Laravel's trainer/admin participant lists possible without cross-service database joins, Laravel stores the participant's stable ID and required display details alongside the registration.
 - PostgreSQL may host both services' data, but each service accesses only its own tables through its ORM. Use UUIDs for cross-service participant identity; never share credentials or database tables as an integration mechanism.
-- Angular uses Laravel for admin/trainer screens and the Flask API for participant account and registration screens.
+- Angular uses Laravel for admin/trainer screens, participant workshop browsing, and enrollment. It uses Flask for participant account creation, login, and registration history.
 
 ## Step-by-step implementation
 
@@ -42,13 +43,13 @@ Use the framework-compatible dependency ranges above, then commit the generated 
    - Implement authentication/role checks and validated endpoints for workshop CRUD, trainer assignments, workshop listings, participant synchronization, registration, and participant lists.
    - Add uniqueness and transaction safeguards so a participant cannot register twice for the same workshop.
 3. **Build the Python participant API — 1.5 hours**
-   - Scaffold Flask, configure its environment and participant persistence, and create account/list/register endpoints.
-   - Validate inputs and call Laravel through a small HTTP client with timeouts and explicit handling of non-success responses.
-   - Keep secrets and service URLs in environment variables; never expose credentials in Angular.
+   - Scaffold Flask, configure its environment and participant persistence, and create account, login, and registration-history endpoints.
+   - Issue participant JWTs with signed identity/profile claims for Laravel to verify; keep the signing secret in both backends' environment.
+   - Keep credentials and Laravel service tokens server-side; never expose them in Angular.
 4. **Build the Angular front end — 2.5 hours**
    - Scaffold the agreed Angular version and add role-oriented routing and modular components.
    - Implement Reactive Forms, client-side validation, and separate HTTP services for Laravel and Flask.
-   - Connect the admin, trainer, and participant journeys to their respective APIs.
+   - Call Laravel for the participant catalog/enrollment and Flask for account, login, and registration history.
 5. **Verify, document, and deliver — 0.5 hour**
    - Exercise the critical flows end to end and run the focused backend/frontend checks.
    - Finish `README.md` with architecture, installation, technical-choice justification, and a Python ↔ Laravel request/response example.
@@ -64,7 +65,7 @@ The required scope is complete when:
 
 - The MCD, three application parts, and database schema/migrations are present.
 - Admin and trainer workflows use Laravel; participant account and registration workflows use Flask.
-- A participant can browse Laravel-backed workshops and register through the Flask-to-Laravel HTTP call.
+- A participant can browse workshops and enroll directly through Laravel using a Flask-issued participant JWT.
 - Admin/trainer participant lists reflect those registrations.
 - The README contains the required setup and architecture details, including a real API exchange example.
 - The documented setup and focused tests work from a clean checkout.

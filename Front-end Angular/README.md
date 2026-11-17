@@ -8,7 +8,7 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The appli
 
 ## Participant interface
 
-The public participant area is available at `/participant/ateliers`; the root URL redirects there. Participants can create an account, sign in, browse open workshops, and register for an available workshop. Angular sends participant requests to the Flask API at `http://127.0.0.1:5000/api/v1`. Flask securely calls Laravel for the workshop catalog and registration, so the Laravel service token stays on the server.
+The public participant area is available at `/participant/ateliers`; the root URL redirects there. Participants create accounts and sign in through Flask at `http://127.0.0.1:5000/api/v1`. Angular calls Laravel directly for the workshop catalog and enrollment at `http://127.0.0.1:8000/api/v1`; Laravel verifies the participant JWT using the shared server-side secret. Flask continues to provide the participant's registration history through a restricted server token that is never exposed to Angular.
 
 For the full flow, start Laravel and Flask in separate terminals before starting Angular:
 
@@ -32,7 +32,7 @@ The staff interface remains available at `/login`.
 
 The Playwright test creates a participant and registration, then checks that an admin can see the registration. It writes persistent records, so point both Laravel and Flask at a **disposable PostgreSQL test database** with migrations initialized, an admin account, and at least one open workshop with available seats. Do not run it against your normal development or production database. The `E2E_TEST_DATABASE` flag is an acknowledgement only; it cannot verify which database the APIs use.
 
-Create a separate database, set Laravel's `DB_DATABASE` and Python's `DATABASE_URL` to it, then run Laravel migrations and Python's `init-db`. Create a test admin, issue a Python service token from that Laravel database, configure it in Python's `.env`, and create an open workshop with available seats. Start Laravel and Flask against this test database. Test records remain in that database after the run; recreate or clear only the disposable test database before another clean run.
+Create a separate database, set Laravel's `DB_DATABASE` and Python's `DATABASE_URL` to it, then run Laravel migrations and Python's `init-db`. Set Laravel's `PARTICIPANT_JWT_SECRET` to the same value as Python's `JWT_SECRET_KEY`. Create a test admin, issue a Python service token with `registrations:read` from that Laravel database, configure it in Python's `.env`, and create an open workshop with available seats. Start Laravel and Flask against this test database. Test records remain in that database after the run; recreate or clear only the disposable test database before another clean run.
 
 Create a local settings file (it is ignored by Git) and fill in the test admin credentials:
 

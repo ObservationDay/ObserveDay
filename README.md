@@ -20,25 +20,27 @@ et la séparation des données entre les deux API.
 ```mermaid
 flowchart LR
     Browser["Navigateur Angular"]
-    Laravel["API Laravel<br/>Admin et formateurs"]
-    Flask["API Flask<br/>Comptes participants"]
+    Laravel["API Laravel<br/>Équipe, catalogue et inscriptions"]
+    Flask["API Flask<br/>Comptes et historique participants"]
     PG["PostgreSQL"]
 
-    Browser -->|"API REST /api/v1"| Laravel
-    Browser -->|"API REST /api/v1"| Flask
-    Flask -->|"HTTP + jeton de service"| Laravel
+    Browser -->|"Équipe + catalogue + inscription"| Laravel
+    Browser -->|"Compte + connexion + historique"| Flask
+    Flask -->|"HTTP + jeton de service (historique)"| Laravel
     Laravel -->|"schéma gestion"| PG
     Flask -->|"schéma participants"| PG
 ```
 
 - **Angular** fournit l’interface et communique avec Laravel pour les écrans
-  d’administration et de formateur, et avec Flask pour le parcours participant.
+  d’administration et de formateur, le catalogue participant et les inscriptions.
+  Flask gère la création de compte, la connexion et l’historique participant.
 - **Laravel** est la source de vérité pour les ateliers, les formateurs et les
   inscriptions. Son API REST, protégée par Sanctum et des contrôles de rôles,
-  gère ces ressources.
+  gère ces ressources. Elle vérifie aussi le JWT participant signé par Flask
+  pour créer une inscription; le secret partagé reste côté serveur.
 - **Flask** gère les comptes et l’authentification des participants. Il appelle
-  Laravel par HTTP pour afficher le catalogue et créer une inscription. Le jeton
-  Laravel utilisé par Flask reste côté serveur.
+  Laravel par HTTP uniquement pour l’historique participant, avec un jeton de
+  service conservé côté serveur.
 - **PostgreSQL** héberge les données dans des schémas distincts. Laravel possède
   le schéma `gestion`; Flask possède `participants`. Laravel conserve une
   référence minimale au participant pour afficher les listes d’inscrits. Les
@@ -53,7 +55,7 @@ flowchart LR
 | Node.js | 18.20 | Environnement compatible avec la version Angular retenue. |
 | Laravel, PHP, Sanctum | Laravel 13, PHP 8.4.1+, Sanctum 4 | Laravel gère l’API métier, les migrations, la validation, l’ORM Eloquent et l’authentification des équipes. PHP 8.4.1 est requis par les versions Symfony verrouillées. |
 | Flask, Python, SQLAlchemy | Flask 3.1, Python 3.12, SQLAlchemy 2 | Flask fournit une API légère pour les participants; SQLAlchemy persiste leurs comptes avec un ORM. Flask-Migrate/Alembic versionne le schéma Python. |
-| Requests | 2.32 | Requests permet à Flask d’appeler l’API Laravel avec un délai d’attente et un jeton serveur. |
+| Requests | 2.32 | Requests permet à Flask de récupérer l’historique participant depuis Laravel avec un délai d’attente et un jeton serveur limité. |
 | PostgreSQL | 17 | Base relationnelle commune, avec des schémas et des migrations séparés selon le propriétaire des données. |
 | API | REST, JSON, `/api/v1` | Format simple et versionné pour les échanges entre le navigateur et les deux API. |
 
@@ -134,8 +136,9 @@ $service.access_token
 
 Copiez le jeton affiché uniquement dans le fichier `.env` local de Flask, sous
 `LARAVEL_SERVICE_TOKEN`. Ne l’insérez jamais dans Angular ni dans le dépôt Git.
-Si vous aviez déjà créé un jeton avant cette mise à jour, générez-en un nouveau
-afin qu’il possède aussi le droit de lecture des inscriptions.
+Les nouveaux jetons ont uniquement le droit `registrations:read`. Les anciens
+jetons conservent leurs droits précédents jusqu’à leur révocation; révoquez tout
+ancien jeton Python puis créez-en un nouveau.
 
 ### 4. Installer et configurer Flask
 
@@ -153,8 +156,14 @@ Dans `Back-end Python/.env`, configurez:
 - `DATABASE_URL` vers la base `smartconseil`, avec le rôle PostgreSQL créé plus
   haut; encodez les caractères spéciaux du mot de passe dans l’URL.
 - `JWT_SECRET_KEY` avec une clé privée d’au moins 32 caractères.
+- `PARTICIPANT_JWT_SECRET` dans `Back-end Laravel/.env` avec la même valeur que
+  `JWT_SECRET_KEY`, afin que Laravel puisse vérifier les JWT participants.
+- `LARAVEL_SERVICE_TOKEN` avec un jeton limité à `registrations:read`; Flask
+  l’utilise uniquement pour afficher l’historique participant. Ne l’exposez
+  jamais dans Angular.
 - `LARAVEL_API_URL=http://127.0.0.1:8000/api/v1`.
-- `LARAVEL_SERVICE_TOKEN` avec le jeton obtenu à l’étape précédente.
+- Après avoir modifié le `.env` Laravel, exécutez `php artisan config:clear` et
+  redémarrez Laravel.
 
 Pour générer une clé JWT locale:
 
@@ -194,46 +203,21 @@ L’application est disponible à `http://127.0.0.1:4200`. Les URL locales des A
 sont définies dans la configuration Angular: Laravel sur le port `8000` et Flask
 sur le port `5000`.
 
-## Exemple d’échange Python ↔ Laravel
+## Exemple d’inscription participant via Laravel
 
-Le navigateur envoie à Flask l’identifiant de l’atelier; il ne choisit pas
-l’identité du participant:
+Après la connexion via Flask, Angular envoie uniquement l’atelier à Laravel.
+Laravel vérifie le JWT participant signé par Flask et prend l’identité dans ses
+claims signés; le navigateur ne peut pas choisir l’identité:
 
 ```http
-POST http://127.0.0.1:5000/api/v1/inscriptions
+POST http://127.0.0.1:8000/api/v1/participant/inscriptions
 Authorization: Bearer <jeton-du-participant>
 Content-Type: application/json
 
 {"workshop_id":"<uuid-atelier>"}
 ```
 
-Après avoir authentifié le participant, Flask construit la requête Laravel à
-partir de son propre compte. Exemple de l’appel serveur-à-serveur:
-
-```python
-import requests
-from flask import current_app
-
-response = requests.request(
-    "POST",
-    f"{current_app.config['LARAVEL_API_URL'].rstrip('/')}/integration/inscriptions",
-    headers={
-        "Accept": "application/json",
-        "Authorization": (
-            f"Bearer {current_app.config['LARAVEL_SERVICE_TOKEN']}"
-        ),
-    },
-    json={
-        "workshop_id": "<uuid-atelier>",
-        "participant_id": "<uuid-du-participant-authentifie>",
-        "nom_affiche": "Camille Martin",
-        "email": "camille@example.test",
-    },
-    timeout=(3, 10),
-)
-body = response.json()
-```
-
+Le catalogue public est disponible sur `GET /api/v1/participant/ateliers`.
 Laravel vérifie les places disponibles et les doublons dans une transaction,
 puis répond par exemple:
 
@@ -255,8 +239,9 @@ Content-Type: application/json
 ```
 
 La réponse réelle contient également les objets `workshop` et `participant`.
-Flask relaie le corps JSON et le code HTTP à Angular. Un atelier complet produit
-un code `409 Conflict`; un jeton de service valide est requis côté Laravel.
+Un atelier complet produit un code `409 Conflict`. L’historique participant
+continue d’utiliser le jeton de service Flask, qui n’est jamais envoyé par le
+navigateur.
 
 ## Tests et vérifications
 

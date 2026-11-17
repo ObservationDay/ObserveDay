@@ -11,7 +11,7 @@ class PostgresApiFlowTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_admin_and_python_service_can_manage_a_workshop_registration(): void
+    public function test_participant_can_read_catalog_and_register_directly_with_flask_jwt(): void
     {
         if (config('database.default') !== 'pgsql') {
             $this->markTestSkipped('This integration test requires PostgreSQL.');
@@ -25,8 +25,8 @@ class PostgresApiFlowTest extends TestCase
 
         $workshop = $this->withToken($adminToken)
             ->postJson('/api/v1/ateliers', [
-                'titre' => 'API integration test',
-                'description' => 'Temporary PostgreSQL test record.',
+                'titre' => 'Direct participant API test',
+                'description' => 'Catalog and registration use Laravel directly.',
                 'starts_at' => now()->addDay()->toIso8601String(),
                 'ends_at' => now()->addDays(2)->toIso8601String(),
                 'capacity' => 1,
@@ -36,104 +36,100 @@ class PostgresApiFlowTest extends TestCase
             ->assertCreated()
             ->json('data');
 
-        $otherWorkshop = $this->withToken($adminToken)
-            ->postJson('/api/v1/ateliers', [
-                'titre' => 'Other participant API test',
-                'description' => 'Registration belongs to another participant.',
-                'starts_at' => now()->addDay()->toIso8601String(),
-                'ends_at' => now()->addDays(2)->toIso8601String(),
-                'capacity' => 1,
-                'status' => 'ouvert',
-                'trainer_id' => null,
-            ])
-            ->assertCreated()
-            ->json('data');
-
-        $cancelledWorkshop = $this->withToken($adminToken)
-            ->postJson('/api/v1/ateliers', [
-                'titre' => 'Cancelled API integration test',
-                'description' => 'This workshop must not appear in the public catalog.',
-                'starts_at' => now()->addDay()->toIso8601String(),
-                'ends_at' => now()->addDays(2)->toIso8601String(),
-                'capacity' => 1,
-                'status' => 'annule',
-                'trainer_id' => null,
-            ])
-            ->assertCreated()
-            ->json('data');
-
-        $serviceTokenResponse = $this->withToken($adminToken)
-            ->postJson('/api/v1/auth/python-token')
-            ->assertCreated()
-            ->assertJsonPath('abilities', [
-                'catalog:read',
-                'registrations:read',
-                'registrations:write',
-            ]);
-        $serviceToken = $serviceTokenResponse->json('access_token');
-
-        $this->withToken($serviceToken)
-            ->postJson('/api/v1/ateliers', [])
-            ->assertForbidden();
-
-        $catalog = $this->withToken($serviceToken)
-            ->getJson('/api/v1/integration/ateliers')
+        $this->withHeaders(['Authorization' => ''])
+            ->getJson('/api/v1/participant/ateliers')
             ->assertOk()
-            ->json('data');
-        $catalogIds = array_column($catalog, 'id');
-        $this->assertContains($workshop['id'], $catalogIds);
-        $this->assertNotContains($cancelledWorkshop['id'], $catalogIds);
+            ->assertJsonPath('data.0.id', $workshop['id']);
 
+        $secret = 'test-participant-jwt-secret-with-at-least-thirty-two-characters';
+        config(['services.participant_jwt.secret' => $secret]);
         $participantId = (string) Str::uuid();
-        $otherParticipantId = (string) Str::uuid();
-        $registrationData = [
-            'workshop_id' => $workshop['id'],
-            'participant_id' => $participantId,
-            'nom_affiche' => 'API participant',
-            'email' => Str::uuid().'@example.test',
-        ];
+        $participantName = 'Direct API participant';
+        $participantEmail = 'direct-participant@example.test';
+        $participantToken = $this->participantJwt(
+            $participantId,
+            $participantName,
+            $participantEmail,
+            $secret,
+        );
+        $registrationPayload = ['workshop_id' => $workshop['id']];
 
-        $this->withToken($serviceToken)
-            ->postJson('/api/v1/integration/inscriptions', [
-                'workshop_id' => $otherWorkshop['id'],
-                'participant_id' => $otherParticipantId,
-                'nom_affiche' => 'Other API participant',
-                'email' => Str::uuid().'@example.test',
+        $this->withHeaders(['Authorization' => ''])
+            ->postJson('/api/v1/participant/inscriptions', $registrationPayload)
+            ->assertUnauthorized();
+        $this->withToken($participantToken.'x')
+            ->postJson('/api/v1/participant/inscriptions', $registrationPayload)
+            ->assertUnauthorized();
+
+        $registration = $this->withToken($participantToken)
+            ->postJson('/api/v1/participant/inscriptions', [
+                ...$registrationPayload,
+                'participant_id' => (string) Str::uuid(),
+                'nom_affiche' => 'Forged name',
+                'email' => 'forged@example.test',
             ])
-            ->assertCreated();
-
-        $registration = $this->withToken($serviceToken)
-            ->postJson('/api/v1/integration/inscriptions', $registrationData)
             ->assertCreated()
             ->assertJsonPath('data.participant.participant_id', $participantId)
+            ->assertJsonPath('data.participant.nom_affiche', $participantName)
+            ->assertJsonPath('data.participant.email', $participantEmail)
             ->json('data');
 
-        $this->withToken($serviceToken)
-            ->postJson('/api/v1/integration/inscriptions', $registrationData)
+        $this->withToken($participantToken)
+            ->postJson('/api/v1/participant/inscriptions', $registrationPayload)
             ->assertOk()
             ->assertJsonPath('data.id', $registration['id']);
 
-        $this->withToken($serviceToken)
-            ->postJson('/api/v1/integration/inscriptions', [
-                ...$registrationData,
-                'participant_id' => (string) Str::uuid(),
-            ])
+        $otherParticipantToken = $this->participantJwt(
+            (string) Str::uuid(),
+            'Other participant',
+            'other-participant@example.test',
+            $secret,
+        );
+        $this->withToken($otherParticipantToken)
+            ->postJson('/api/v1/participant/inscriptions', $registrationPayload)
             ->assertStatus(409);
 
-        $this->withToken($serviceToken)
-            ->patchJson('/api/v1/integration/inscriptions/'.$registration['id'].'/annulation')
-            ->assertOk()
-            ->assertJsonPath('data.status', 'annule');
-
-        $this->withToken($serviceToken)
-            ->postJson('/api/v1/integration/inscriptions', $registrationData)
-            ->assertOk()
-            ->assertJsonPath('data.status', 'inscrit');
+        $serviceToken = $this->withToken($adminToken)
+            ->postJson('/api/v1/auth/python-token')
+            ->assertCreated()
+            ->assertJsonPath('abilities', ['registrations:read'])
+            ->json('access_token');
 
         $this->withToken($serviceToken)
             ->getJson('/api/v1/integration/participants/'.$participantId.'/inscriptions')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.participant.participant_id', $participantId);
+    }
+
+    private function participantJwt(
+        string $participantId,
+        string $name,
+        string $email,
+        string $secret,
+    ): string {
+        $encode = static fn (array $value): string => rtrim(strtr(
+            base64_encode(json_encode($value, JSON_THROW_ON_ERROR)),
+            '+/',
+            '-_',
+        ), '=');
+
+        $header = $encode(['alg' => 'HS256', 'typ' => 'JWT']);
+        $claims = $encode([
+            'sub' => $participantId,
+            'type' => 'access',
+            'iat' => time(),
+            'exp' => time() + 1800,
+            'participant_name' => $name,
+            'participant_email' => $email,
+        ]);
+        $input = "{$header}.{$claims}";
+        $signature = rtrim(strtr(
+            base64_encode(hash_hmac('sha256', $input, $secret, true)),
+            '+/',
+            '-_',
+        ), '=');
+
+        return "{$input}.{$signature}";
     }
 }

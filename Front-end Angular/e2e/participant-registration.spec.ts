@@ -41,7 +41,7 @@ test('participant registration appears in the admin list', async ({ page, reques
     throw new Error('E2E_ADMIN_EMAIL must belong to an admin account.');
   }
 
-  const catalogResponse = await request.get('http://127.0.0.1:5000/api/v1/ateliers');
+  const catalogResponse = await request.get('http://127.0.0.1:8000/api/v1/participant/ateliers');
   if (!catalogResponse.ok()) {
     throw new Error(`The participant workshop catalog failed with HTTP ${catalogResponse.status()}.`);
   }

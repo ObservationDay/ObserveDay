@@ -10,6 +10,7 @@ import { AppComponent } from './app.component';
 import { AuthGuard } from './core/auth.guard';
 import { AuthInterceptor } from './core/auth.interceptor';
 import { RoleGuard } from './core/role.guard';
+import { StaffLoginGuard } from './core/staff-login.guard';
 import { LoginComponent } from './pages/login/login.component';
 import { ParticipantAccountComponent } from './pages/participant-account/participant-account.component';
 import { ParticipantLayoutComponent } from './pages/participant-layout/participant-layout.component';
@@ -21,7 +22,7 @@ import { WorkshopsComponent } from './pages/workshops/workshops.component';
 registerLocaleData(localeFr, 'fr-FR');
 
 const routes: Routes = [
-  { path: 'login', component: LoginComponent },
+  { path: 'login', component: LoginComponent, canActivate: [StaffLoginGuard] },
   {
     path: 'participant',
     component: ParticipantLayoutComponent,

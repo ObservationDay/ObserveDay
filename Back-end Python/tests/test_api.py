@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 from uuid import UUID
 
+from flask_jwt_extended import decode_token
 from flask_migrate import upgrade
 from sqlalchemy import text
 
@@ -87,6 +88,10 @@ class ParticipantApiTests(unittest.TestCase):
         self.assertIsInstance(UUID(body["participant"]["id"]), UUID)
         self.assertNotIn("password_hash", body["participant"])
         self.assertTrue(body["access_token"])
+        with self.app.app_context():
+            claims = decode_token(body["access_token"])
+        self.assertEqual(claims["participant_name"], "Test Participant")
+        self.assertEqual(claims["participant_email"], "participant@example.com")
 
         login = self.client.post(
             "/api/v1/auth/login",
@@ -111,66 +116,15 @@ class ParticipantApiTests(unittest.TestCase):
 
         self.assertEqual(duplicate.status_code, 409)
 
-    @patch("participant_api.laravel_client.requests.request")
-    def test_workshop_catalog_is_proxied_with_server_token(self, request_mock):
-        upstream = Mock(status_code=200)
-        upstream.json.return_value = {"data": [{"id": "workshop-id"}]}
-        request_mock.return_value = upstream
-
-        response = self.client.get("/api/v1/ateliers")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json(), {"data": [{"id": "workshop-id"}]})
-        request_mock.assert_called_once_with(
-            "GET",
-            "http://laravel.test/api/v1/integration/ateliers",
-            headers={
-                "Accept": "application/json",
-                "Authorization": "Bearer test-laravel-token",
-            },
-            json=None,
-            timeout=(3, 10),
-        )
-
-    @patch("participant_api.laravel_client.requests.request")
-    def test_registration_uses_authenticated_participant_and_forwards_capacity_error(
-        self, request_mock
-    ):
-        created = self.create_participant()
-        participant_id = created.get_json()["participant"]["id"]
-        access_token = created.get_json()["access_token"]
-        upstream = Mock(status_code=409)
-        upstream.json.return_value = {"message": "This workshop has no available seats."}
-        request_mock.return_value = upstream
-
-        response = self.client.post(
-            "/api/v1/inscriptions",
-            headers={"Authorization": f"Bearer {access_token}"},
-            json={
-                "workshop_id": "62a09262-2cb3-4f15-a755-4f8e623a4451",
-                "participant_id": "0f8bfaeb-18ba-4f26-b5ed-c1801d9e2474",
-                "email": "forged@example.com",
-            },
-        )
-
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(
-            request_mock.call_args.kwargs["json"],
-            {
-                "workshop_id": "62a09262-2cb3-4f15-a755-4f8e623a4451",
-                "participant_id": participant_id,
-                "nom_affiche": "Test Participant",
-                "email": "participant@example.com",
-            },
-        )
-
-    def test_registration_requires_participant_authentication(self):
-        response = self.client.post(
+    def test_workshop_catalog_and_enrollment_are_not_exposed_by_python(self):
+        catalog = self.client.get("/api/v1/ateliers")
+        registration = self.client.post(
             "/api/v1/inscriptions",
             json={"workshop_id": "62a09262-2cb3-4f15-a755-4f8e623a4451"},
         )
 
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(catalog.status_code, 404)
+        self.assertEqual(registration.status_code, 405)
 
     @patch("participant_api.laravel_client.requests.request")
     def test_participant_can_list_only_their_laravel_registrations(self, request_mock):

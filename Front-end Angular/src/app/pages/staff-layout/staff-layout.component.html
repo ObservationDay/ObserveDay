@@ -21,7 +21,7 @@
     </nav>
 
     <div class="sidebar-bottom">
-      <div class="help-card">
+      <div class="help-card" *ngIf="auth.currentUser?.role !== 'admin'">
         <span class="help-icon" aria-hidden="true">i</span>
         <div>
           <strong>Besoin d’aide ?</strong>

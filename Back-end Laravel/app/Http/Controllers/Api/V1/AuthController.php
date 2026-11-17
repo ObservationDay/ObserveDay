@@ -50,7 +50,7 @@ class AuthController extends Controller
 
     public function createPythonServiceToken(Request $request): JsonResponse
     {
-        $abilities = ['catalog:read', 'registrations:read', 'registrations:write'];
+        $abilities = ['registrations:read'];
 
         return response()->json([
             'access_token' => $request->user()

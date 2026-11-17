@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 
-import { PARTICIPANT_API_BASE_URL } from './api-config';
+import { API_BASE_URL, PARTICIPANT_API_BASE_URL } from './api-config';
 import { ParticipantAuthService } from './participant-auth.service';
 import { PaginatedResponse, Registration, ResourceResponse, Workshop } from './models';
 
@@ -15,7 +15,7 @@ export class ParticipantApiService {
 
   listAvailableWorkshops(): Observable<PaginatedResponse<Workshop>> {
     return this.http.get<PaginatedResponse<Workshop>>(
-      `${PARTICIPANT_API_BASE_URL}/ateliers`,
+      `${API_BASE_URL}/participant/ateliers`,
     );
   }
 
@@ -30,10 +30,10 @@ export class ParticipantApiService {
 
   registerForWorkshop(workshopId: string): Observable<ResourceResponse<Registration>> {
     const request = this.http.post<ResourceResponse<Registration>>(
-        `${PARTICIPANT_API_BASE_URL}/inscriptions`,
-        { workshop_id: workshopId },
-        { headers: this.participantHeaders() },
-      );
+      `${API_BASE_URL}/participant/inscriptions`,
+      { workshop_id: workshopId },
+      { headers: this.participantHeaders() },
+    );
 
     return this.clearSessionOnUnauthorized(request);
   }

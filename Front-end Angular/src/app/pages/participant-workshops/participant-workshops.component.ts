@@ -65,7 +65,7 @@ export class ParticipantWorkshopsComponent implements OnInit {
         this.errorMessage = getApiErrorMessage(
           error,
           'Impossible de vous inscrire à cet atelier.',
-          'Python',
+          'Laravel',
         );
         this.pendingWorkshopId = null;
       },
@@ -83,8 +83,8 @@ export class ParticipantWorkshopsComponent implements OnInit {
       error: (error: unknown) => {
         this.errorMessage = getApiErrorMessage(
           error,
-          'Impossible de charger les ateliers. Vérifiez que Flask et Laravel démarrent.',
-          'Python',
+          'Impossible de charger les ateliers. Vérifiez que Laravel démarre.',
+          'Laravel',
         );
         this.isLoading = false;
       },

@@ -26,19 +26,24 @@ php artisan serve
 
 The Laravel domain tables are created in PostgreSQL schema `gestion`. Existing Laravel framework tables in `public` are left untouched. Run `php artisan migrate:status` to check applied migrations.
 
+Set `PARTICIPANT_JWT_SECRET` in `.env` to the same value as Flask's
+`JWT_SECRET_KEY`. Laravel uses it to verify participant JWTs for direct
+catalog/enrollment requests; keep both values private.
+
 ## API
 
 The versioned API uses JSON under `/api/v1`. Create the first admin interactively with `php artisan app:create-admin`, then sign in at `POST /api/v1/auth/login` with `email` and `password`. Use the returned bearer token for the protected endpoints.
 
 - Admin: manage `/formateurs` and create, update, or delete `/ateliers`.
 - Admin and trainers: list workshops, registrations, and participant references. Trainers only see their assigned workshops and related participants.
-- Python service: an admin can issue a limited token at `POST /api/v1/auth/python-token`. It grants `catalog:read`, `registrations:read`, and `registrations:write`; use it for the workshop catalog, a participant-scoped registration list, creating registrations, and cancellation. The token must be kept server-side. Reissue existing tokens to obtain the new read ability.
+- Participants: `GET /api/v1/participant/ateliers` lists available workshops; `POST /api/v1/participant/inscriptions` creates an enrollment using a Flask-issued participant JWT. Laravel derives the participant identity from signed claims and applies capacity/duplicate-registration rules.
+- Python service: an admin can issue a limited token at `POST /api/v1/auth/python-token`. It grants only `registrations:read`, for Flask to retrieve the authenticated participant's registration history. Keep it server-side; never put it in Angular.
 
 Workshop registrations are transactional, capacity-checked, and unique per workshop/participant. Cancellation changes the status to `annule` and retains history.
 
-### Example: create and register for a workshop
+### Example: create a workshop and enroll a participant
 
-Run this in PowerShell after creating an admin and starting the Laravel server. Replace the email and password placeholders. The admin token is for staff endpoints; the separate Python token has only catalog and registration abilities.
+Run this in PowerShell after creating an admin and starting the Laravel server. Replace the email and password placeholders. Obtain `$participantToken` by registering or signing in through Flask.
 
 ```powershell
 $baseUrl = 'http://127.0.0.1:8000/api/v1'
@@ -61,24 +66,20 @@ $workshop = Invoke-RestMethod -Method Post -Uri "$baseUrl/ateliers" `
         trainer_id = $null
     } | ConvertTo-Json)
 
-$serviceToken = Invoke-RestMethod -Method Post -Uri "$baseUrl/auth/python-token" `
-    -Headers $adminHeaders
-$serviceHeaders = @{ Authorization = "Bearer $($serviceToken.access_token)"; Accept = 'application/json' }
-
-$participantId = [guid]::NewGuid().ToString()
-$registration = Invoke-RestMethod -Method Post -Uri "$baseUrl/integration/inscriptions" `
-    -Headers $serviceHeaders -ContentType 'application/json' `
+$participantHeaders = @{
+    Authorization = "Bearer $participantToken"
+    Accept = 'application/json'
+}
+$registration = Invoke-RestMethod -Method Post -Uri "$baseUrl/participant/inscriptions" `
+    -Headers $participantHeaders -ContentType 'application/json' `
     -Body (@{
         workshop_id = $workshop.data.id
-        participant_id = $participantId
-        nom_affiche = 'API test participant'
-        email = 'participant@example.test'
     } | ConvertTo-Json)
 
 $registration.data
 ```
 
-Resources use a top-level `data` object (or `data` array for collections). Login and token-creation responses return `access_token` at the top level. Keep both tokens private; do not commit them or place them in browser code.
+Resources use a top-level `data` object (or `data` array for collections). Login and token-creation responses return `access_token` at the top level. Do not commit tokens or secrets, and never put the Laravel service token or signing secret in browser code.
 
 ## About Laravel
 

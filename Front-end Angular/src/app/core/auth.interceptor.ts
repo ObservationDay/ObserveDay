@@ -14,7 +14,8 @@ export class AuthInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    const isStaffApiRequest = request.url.startsWith(API_BASE_URL);
+    const isParticipantApiRequest = request.url.startsWith(`${API_BASE_URL}/participant/`);
+    const isStaffApiRequest = request.url.startsWith(API_BASE_URL) && !isParticipantApiRequest;
     const isLoginRequest = request.url === `${API_BASE_URL}/auth/login`;
     const token = isStaffApiRequest ? this.auth.token : null;
     const authenticatedRequest = token && !isLoginRequest
@@ -25,8 +26,7 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: unknown) => {
         if (
           isStaffApiRequest
-          &&
-          typeof error === 'object'
+          && typeof error === 'object'
           && error !== null
           && 'status' in error
           && error.status === 401

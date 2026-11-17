@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'participant_jwt' => [
+        'secret' => env('PARTICIPANT_JWT_SECRET'),
+    ],
+
 ];

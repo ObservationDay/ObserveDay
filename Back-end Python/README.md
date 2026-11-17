@@ -1,6 +1,10 @@
 # Participant API
 
-Flask owns participant accounts in the PostgreSQL `participants.participants` table. Laravel remains the source of truth for workshops and registrations; Flask calls Laravel over HTTP using a restricted server-side bearer token. Participant passwords never leave Flask.
+Flask owns participant accounts in the PostgreSQL `participants.participants`
+table. Angular calls Laravel directly for the workshop catalog and enrollment.
+Flask signs participant JWTs that Laravel verifies with the same server-side
+secret. Flask uses a restricted bearer token only to retrieve a participant's
+registration history. Participant passwords never leave Flask.
 
 ## Setup on Windows
 
@@ -25,8 +29,9 @@ Edit `.env`:
 
 - Set `DATABASE_URL` to the same PostgreSQL database used by Laravel. URL-encode special characters in the password.
 - Generate a private signing key, for example with `python -c "import secrets; print(secrets.token_urlsafe(48))"`, and set it as `JWT_SECRET_KEY`.
-- Create a Laravel integration token with an admin account using `POST /api/v1/auth/python-token`, then set the returned token as `LARAVEL_SERVICE_TOKEN`. Never expose this token to Angular or participants.
-- If you already created a token before adding the participant registration list, issue a new token so it includes the `registrations:read` ability.
+- Set Laravel's `PARTICIPANT_JWT_SECRET` to the same value as `JWT_SECRET_KEY`.
+- Create a Laravel integration token with an admin account using `POST /api/v1/auth/python-token`, then set the returned `registrations:read` token as `LARAVEL_SERVICE_TOKEN`. Flask uses it only for the participant registration-history endpoint. Never expose this token to Angular or participants.
+- If you have an older Python service token, revoke it and issue a new one; existing tokens retain their previous abilities.
 
 For a new database, apply the versioned schema migrations:
 
@@ -77,21 +82,28 @@ All endpoints return JSON under `/api/v1`:
 | `POST` | `/participants` | Create participant account; returns a participant JWT |
 | `POST` | `/auth/login` | Authenticate and obtain a participant JWT |
 | `GET` | `/participants/me` | Return the authenticated participant |
-| `GET` | `/ateliers` | Proxy Laravel's available workshop catalog |
-| `GET` | `/ateliers/{workshop_id}` | Proxy one available Laravel workshop |
 | `GET` | `/inscriptions` | List the authenticated participant's registrations |
-| `POST` | `/inscriptions` | Register the authenticated participant through Laravel |
 
-Account creation accepts `nom`, `email`, `password`, and `password_confirmation`. Both participant registration endpoints require the participant JWT. Flask derives the participant identity from that JWT and proxies only that participant's registrations from Laravel. Workshop registration accepts only `workshop_id`; Flask supplies the participant UUID and profile fields from the authenticated account, so clients cannot register another participant. Laravel enforces workshop capacity and duplicate-registration rules.
+Account creation accepts `nom`, `email`, `password`, and
+`password_confirmation`. Participant JWTs contain signed participant identity
+claims and expire after 30 minutes. The history endpoint requires that JWT;
+Flask derives the participant ID from it and requests only that participant's
+registrations from Laravel. Participants with sessions created before this
+change must sign in again so their JWT includes the required identity claims.
 
-Example registration request:
+The catalog and enrollment endpoints are Laravel-only:
 
 ```http
-POST /api/v1/inscriptions
+GET http://127.0.0.1:8000/api/v1/participant/ateliers
+
+POST http://127.0.0.1:8000/api/v1/participant/inscriptions
 Authorization: Bearer <participant-access-token>
 Content-Type: application/json
 
 {"workshop_id":"<workshop-uuid>"}
 ```
 
-Participant access tokens expire after 30 minutes. Laravel's integration token remains server-side in `.env`; do not commit `.env` or expose its contents.
+Laravel verifies the JWT using `PARTICIPANT_JWT_SECRET`, which must match
+Python's `JWT_SECRET_KEY`. The Laravel service token remains server-side in
+`.env` and is used only to retrieve registration history; do not commit `.env`
+or expose its contents.

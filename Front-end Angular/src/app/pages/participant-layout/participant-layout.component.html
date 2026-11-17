@@ -23,7 +23,7 @@
         <button *ngIf="auth.isAuthenticated" type="button" class="nav-link" (click)="logout()">
           Déconnexion
         </button>
-        <a class="staff-link" routerLink="/login">Espace équipe</a>
+        <a *ngIf="!auth.isAuthenticated" class="staff-link" routerLink="/login">Espace équipe</a>
       </nav>
     </div>
   </header>
