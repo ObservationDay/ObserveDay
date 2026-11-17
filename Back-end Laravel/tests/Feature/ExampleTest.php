@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\PersonalAccessToken;
+use App\Models\User;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
@@ -22,5 +25,38 @@ class ExampleTest extends TestCase
         $this->get('/api/user', ['Accept' => 'text/html'])
             ->assertUnauthorized()
             ->assertJson(['message' => 'Unauthenticated.']);
+    }
+
+    public function test_trainer_cannot_create_workshops(): void
+    {
+        $trainer = new User([
+            'nom' => 'Test Trainer',
+            'email' => 'trainer@example.test',
+            'password_hash' => 'a-strong-test-password',
+            'role' => 'formateur',
+        ]);
+        $trainer->id = (string) Str::uuid();
+        Sanctum::actingAs($trainer);
+
+        $this->postJson('/api/v1/ateliers', [])
+            ->assertForbidden();
+    }
+
+    public function test_python_integration_token_cannot_use_staff_endpoints(): void
+    {
+        $admin = new User([
+            'nom' => 'Test Admin',
+            'email' => 'admin@example.test',
+            'password_hash' => 'a-strong-test-password',
+            'role' => 'admin',
+        ]);
+        $admin->id = (string) Str::uuid();
+        Sanctum::actingAs($admin, ['catalog:read', 'registrations:write']);
+        $admin->withAccessToken(new PersonalAccessToken([
+            'abilities' => ['catalog:read', 'registrations:write'],
+        ]));
+
+        $this->postJson('/api/v1/ateliers', [])
+            ->assertForbidden();
     }
 }

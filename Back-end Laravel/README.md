@@ -24,6 +24,62 @@ php artisan migrate
 php artisan serve
 ```
 
+The Laravel domain tables are created in PostgreSQL schema `gestion`. Existing Laravel framework tables in `public` are left untouched. Run `php artisan migrate:status` to check applied migrations.
+
+## API
+
+The versioned API uses JSON under `/api/v1`. Create the first admin interactively with `php artisan app:create-admin`, then sign in at `POST /api/v1/auth/login` with `email` and `password`. Use the returned bearer token for the protected endpoints.
+
+- Admin: manage `/formateurs` and create, update, or delete `/ateliers`.
+- Admin and trainers: list workshops, registrations, and participant references. Trainers only see their assigned workshops and related participants.
+- Python service: an admin can issue a limited token at `POST /api/v1/auth/python-token`. Use it for `GET /integration/ateliers`, `POST /integration/inscriptions`, and registration cancellation. The token must be kept server-side.
+
+Workshop registrations are transactional, capacity-checked, and unique per workshop/participant. Cancellation changes the status to `annule` and retains history.
+
+### Example: create and register for a workshop
+
+Run this in PowerShell after creating an admin and starting the Laravel server. Replace the email and password placeholders. The admin token is for staff endpoints; the separate Python token has only catalog and registration abilities.
+
+```powershell
+$baseUrl = 'http://127.0.0.1:8000/api/v1'
+
+$login = Invoke-RestMethod -Method Post -Uri "$baseUrl/auth/login" `
+    -ContentType 'application/json' `
+    -Body (@{ email = 'admin@example.test'; password = '<admin-password>' } | ConvertTo-Json)
+$adminHeaders = @{ Authorization = "Bearer $($login.access_token)"; Accept = 'application/json' }
+
+$startsAt = (Get-Date).AddDays(1)
+$workshop = Invoke-RestMethod -Method Post -Uri "$baseUrl/ateliers" `
+    -Headers $adminHeaders -ContentType 'application/json' `
+    -Body (@{
+        titre = 'API test workshop'
+        description = 'Created through the Laravel API.'
+        starts_at = $startsAt.ToString('o')
+        ends_at = $startsAt.AddHours(2).ToString('o')
+        capacity = 10
+        status = 'ouvert'
+        trainer_id = $null
+    } | ConvertTo-Json)
+
+$serviceToken = Invoke-RestMethod -Method Post -Uri "$baseUrl/auth/python-token" `
+    -Headers $adminHeaders
+$serviceHeaders = @{ Authorization = "Bearer $($serviceToken.access_token)"; Accept = 'application/json' }
+
+$participantId = [guid]::NewGuid().ToString()
+$registration = Invoke-RestMethod -Method Post -Uri "$baseUrl/integration/inscriptions" `
+    -Headers $serviceHeaders -ContentType 'application/json' `
+    -Body (@{
+        workshop_id = $workshop.data.id
+        participant_id = $participantId
+        nom_affiche = 'API test participant'
+        email = 'participant@example.test'
+    } | ConvertTo-Json)
+
+$registration.data
+```
+
+Resources use a top-level `data` object (or `data` array for collections). Login and token-creation responses return `access_token` at the top level. Keep both tokens private; do not commit them or place them in browser code.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
