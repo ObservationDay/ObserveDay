@@ -54,6 +54,7 @@ jobs:
         working-directory: Back-end Laravel
       - name: Test Laravel with coverage
         run: |
+          export APP_KEY="$(php artisan key:generate --show)"
           php artisan migrate --force
           php artisan test --coverage-clover=coverage.xml
         working-directory: Back-end Laravel
