@@ -39,6 +39,7 @@ class Workshop extends Model
     public function scopeAvailableForRegistration(Builder $query): Builder
     {
         return $query
+            ->where('status', 'ouvert')
             ->where('starts_at', '>', now())
             ->whereRaw(
                 'capacity > (SELECT COUNT(*) FROM gestion.inscriptions WHERE gestion.inscriptions.workshop_id = gestion.ateliers.id AND gestion.inscriptions.status = ?)',

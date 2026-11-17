@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, catchError, throwError } from 'rxjs';
 
+import { API_BASE_URL } from './api-config';
 import { AuthService } from './auth.service';
 
 @Injectable()
@@ -13,19 +14,23 @@ export class AuthInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    const token = this.auth.token;
-    const authenticatedRequest = token && !request.url.endsWith('/auth/login')
+    const isStaffApiRequest = request.url.startsWith(API_BASE_URL);
+    const isLoginRequest = request.url === `${API_BASE_URL}/auth/login`;
+    const token = isStaffApiRequest ? this.auth.token : null;
+    const authenticatedRequest = token && !isLoginRequest
       ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
       : request;
 
     return next.handle(authenticatedRequest).pipe(
       catchError((error: unknown) => {
         if (
+          isStaffApiRequest
+          &&
           typeof error === 'object'
           && error !== null
           && 'status' in error
           && error.status === 401
-          && !request.url.endsWith('/auth/login')
+          && !isLoginRequest
         ) {
           this.auth.clearSession();
           void this.router.navigate(['/login'], { queryParams: { expired: '1' } });

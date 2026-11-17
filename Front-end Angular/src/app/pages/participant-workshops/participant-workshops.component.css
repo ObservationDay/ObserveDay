@@ -1,0 +1,68 @@
+.participant-hero {
+  padding: clamp(30px, 5vw, 58px);
+  border-radius: 14px;
+  background: linear-gradient(125deg, #123047, #1d5970);
+  color: #fff;
+}
+
+.participant-hero .eyebrow { color: #a7dbcb; }
+.participant-hero h1 {
+  max-width: 650px;
+  margin: 0;
+  font: 800 clamp(30px, 5vw, 49px) 'Manrope', sans-serif;
+  letter-spacing: -.045em;
+  line-height: 1.1;
+}
+.participant-hero > p:not(.eyebrow) {
+  max-width: 550px;
+  margin: 16px 0 24px;
+  color: rgba(255, 255, 255, .76);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.button-light { background: #fff; color: var(--navy); text-decoration: none; }
+.catalog-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 42px 0 18px;
+}
+.catalog-heading .eyebrow { margin-bottom: 5px; }
+.catalog-heading h2 { margin: 0; font: 800 24px 'Manrope', sans-serif; letter-spacing: -.035em; }
+.catalog-heading p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+.catalog-count, .seat-count { color: var(--muted); font-size: 10px; font-weight: 600; }
+.workshop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 17px; }
+.workshop-card {
+  display: flex;
+  min-height: 290px;
+  flex-direction: column;
+  padding: 21px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+.card-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.workshop-card .status-pill { background: var(--mint); color: var(--green); }
+.workshop-card h3 { margin: 21px 0 7px; font: 800 18px 'Manrope', sans-serif; letter-spacing: -.025em; }
+.workshop-description { min-height: 42px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.workshop-details { display: grid; gap: 13px; margin: 20px 0; padding-top: 15px; border-top: 1px solid var(--line); }
+.workshop-details > div { display: grid; gap: 5px; }
+.detail-label { color: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .1em; }
+.workshop-details strong { color: var(--ink); font-size: 11px; font-weight: 600; }
+.register-button { width: 100%; margin-top: auto; }
+.notice { margin-top: 18px; }
+.empty-state { text-align: center; }
+
+@media (max-width: 600px) {
+  .participant-hero {
+    padding: 28px 22px;
+  }
+
+  .catalog-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-top: 32px;
+  }
+}

@@ -11,6 +11,9 @@ import { AuthGuard } from './core/auth.guard';
 import { AuthInterceptor } from './core/auth.interceptor';
 import { RoleGuard } from './core/role.guard';
 import { LoginComponent } from './pages/login/login.component';
+import { ParticipantAccountComponent } from './pages/participant-account/participant-account.component';
+import { ParticipantLayoutComponent } from './pages/participant-layout/participant-layout.component';
+import { ParticipantWorkshopsComponent } from './pages/participant-workshops/participant-workshops.component';
 import { RegistrationsComponent } from './pages/registrations/registrations.component';
 import { StaffLayoutComponent } from './pages/staff-layout/staff-layout.component';
 import { WorkshopsComponent } from './pages/workshops/workshops.component';
@@ -19,6 +22,24 @@ registerLocaleData(localeFr, 'fr-FR');
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  {
+    path: 'participant',
+    component: ParticipantLayoutComponent,
+    children: [
+      { path: '', redirectTo: 'ateliers', pathMatch: 'full' },
+      { path: 'ateliers', component: ParticipantWorkshopsComponent },
+      {
+        path: 'connexion',
+        component: ParticipantAccountComponent,
+        data: { mode: 'login' },
+      },
+      {
+        path: 'creer-compte',
+        component: ParticipantAccountComponent,
+        data: { mode: 'signup' },
+      },
+    ],
+  },
   {
     path: 'app',
     component: StaffLayoutComponent,
@@ -39,14 +60,17 @@ const routes: Routes = [
       },
     ],
   },
-  { path: '', redirectTo: 'app', pathMatch: 'full' },
-  { path: '**', redirectTo: 'app' },
+  { path: '', redirectTo: 'participant/ateliers', pathMatch: 'full' },
+  { path: '**', redirectTo: 'participant/ateliers' },
 ];
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
+    ParticipantAccountComponent,
+    ParticipantLayoutComponent,
+    ParticipantWorkshopsComponent,
     RegistrationsComponent,
     StaffLayoutComponent,
     WorkshopsComponent,

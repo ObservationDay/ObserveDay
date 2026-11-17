@@ -1,0 +1,133 @@
+<section class="account-card" aria-labelledby="account-title">
+  <a class="account-back" routerLink="/participant/ateliers">← Retour aux ateliers</a>
+
+  <p class="eyebrow">{{ mode === 'login' ? 'ESPACE PARTICIPANT' : 'REJOIGNEZ-NOUS' }}</p>
+  <h1 id="account-title">
+    {{ mode === 'login' ? 'Connectez-vous.' : 'Créez votre compte.' }}
+  </h1>
+  <p class="account-intro">
+    {{
+      mode === 'login'
+        ? 'Connectez-vous pour réserver votre place dans un atelier.'
+        : 'Un compte vous permet de vous inscrire aux ateliers disponibles.'
+    }}
+  </p>
+
+  <div class="account-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <form *ngIf="mode === 'login'" [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+    <div class="form-field">
+      <label for="participant-login-email">Adresse e-mail</label>
+      <input
+        id="participant-login-email"
+        class="form-control"
+        type="email"
+        formControlName="email"
+        autocomplete="email"
+        [attr.aria-invalid]="loginForm.controls.email.touched && loginForm.controls.email.invalid"
+      />
+      <small class="validation-message" *ngIf="loginForm.controls.email.touched && loginForm.controls.email.invalid">
+        Saisissez une adresse e-mail valide.
+      </small>
+    </div>
+
+    <div class="form-field">
+      <label for="participant-login-password">Mot de passe</label>
+      <input
+        id="participant-login-password"
+        class="form-control"
+        type="password"
+        formControlName="password"
+        autocomplete="current-password"
+        [attr.aria-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
+      />
+      <small class="validation-message" *ngIf="loginForm.controls.password.touched && loginForm.controls.password.invalid">
+        Le mot de passe est obligatoire.
+      </small>
+    </div>
+
+    <button class="button button-primary account-submit" type="submit" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Connexion…' : 'Se connecter' }}
+    </button>
+    <p class="account-switch">
+      Pas encore de compte ?
+      <a routerLink="/participant/creer-compte" [queryParams]="{ returnUrl: returnUrl() }">
+        Créer un compte
+      </a>
+    </p>
+  </form>
+
+  <form *ngIf="mode === 'signup'" [formGroup]="signupForm" (ngSubmit)="submitSignup()" novalidate>
+    <div class="form-field">
+      <label for="participant-name">Nom complet</label>
+      <input
+        id="participant-name"
+        class="form-control"
+        type="text"
+        formControlName="nom"
+        autocomplete="name"
+        maxlength="120"
+        [attr.aria-invalid]="signupForm.controls.nom.touched && signupForm.controls.nom.invalid"
+      />
+      <small class="validation-message" *ngIf="signupForm.controls.nom.touched && signupForm.controls.nom.invalid">
+        Indiquez votre nom (120 caractères maximum).
+      </small>
+    </div>
+
+    <div class="form-field">
+      <label for="participant-signup-email">Adresse e-mail</label>
+      <input
+        id="participant-signup-email"
+        class="form-control"
+        type="email"
+        formControlName="email"
+        autocomplete="email"
+        [attr.aria-invalid]="signupForm.controls.email.touched && signupForm.controls.email.invalid"
+      />
+      <small class="validation-message" *ngIf="signupForm.controls.email.touched && signupForm.controls.email.invalid">
+        Saisissez une adresse e-mail valide.
+      </small>
+    </div>
+
+    <div class="form-field">
+      <label for="participant-signup-password">Mot de passe</label>
+      <input
+        id="participant-signup-password"
+        class="form-control"
+        type="password"
+        formControlName="password"
+        autocomplete="new-password"
+        [attr.aria-invalid]="signupForm.controls.password.touched && signupForm.controls.password.invalid"
+      />
+      <small class="validation-message" *ngIf="signupForm.controls.password.touched && signupForm.controls.password.invalid">
+        Choisissez un mot de passe de 12 caractères minimum.
+      </small>
+    </div>
+
+    <div class="form-field">
+      <label for="participant-password-confirmation">Confirmer le mot de passe</label>
+      <input
+        id="participant-password-confirmation"
+        class="form-control"
+        type="password"
+        formControlName="password_confirmation"
+        autocomplete="new-password"
+        [attr.aria-invalid]="signupForm.controls.password_confirmation.touched && signupForm.hasError('passwordMismatch')"
+      />
+      <small
+        class="validation-message"
+        *ngIf="signupForm.controls.password_confirmation.touched && signupForm.hasError('passwordMismatch')"
+      >Les mots de passe ne correspondent pas.</small>
+    </div>
+
+    <button class="button button-primary account-submit" type="submit" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Création…' : 'Créer mon compte' }}
+    </button>
+    <p class="account-switch">
+      Déjà inscrit ?
+      <a routerLink="/participant/connexion" [queryParams]="{ returnUrl: returnUrl() }">
+        Se connecter
+      </a>
+    </p>
+  </form>
+</section>

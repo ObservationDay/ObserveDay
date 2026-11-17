@@ -1,12 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-export function getApiErrorMessage(error: unknown, fallback: string): string {
+export function getApiErrorMessage(
+  error: unknown,
+  fallback: string,
+  apiName = 'Laravel',
+): string {
   if (!(error instanceof HttpErrorResponse)) {
     return fallback;
   }
 
   if (error.status === 0) {
-    return 'Impossible de joindre l’API Laravel. Vérifiez que le serveur est démarré.';
+    return `Impossible de joindre l’API ${apiName}. Vérifiez que le serveur est démarré.`;
   }
 
   const body: unknown = error.error;

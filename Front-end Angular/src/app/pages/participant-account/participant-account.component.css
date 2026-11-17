@@ -1,0 +1,130 @@
+:host {
+  display: block;
+}
+
+.account-card {
+  width: min(460px, 100%);
+  margin: 8px auto;
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.account-back {
+  display: inline-block;
+  margin-bottom: 30px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.account-back:hover {
+  color: var(--blue);
+}
+
+.account-card h1 {
+  margin: 7px 0 8px;
+  font: 800 29px 'Manrope', sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.account-intro {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.form-field {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+
+.form-field label {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.form-control {
+  width: 100%;
+  min-height: 43px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  outline: none;
+  background: #fff;
+  color: var(--ink);
+}
+
+.form-control:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(40, 116, 166, 0.12);
+}
+
+.form-control[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+.validation-message {
+  color: var(--red);
+  font-size: 10px;
+}
+
+.account-error {
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #fff0ef;
+  color: var(--red);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.button-primary {
+  background: var(--blue);
+  color: #fff;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--blue-dark);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.account-submit {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.account-switch {
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.account-switch a {
+  color: var(--blue);
+  font-weight: 700;
+  text-decoration: none;
+}

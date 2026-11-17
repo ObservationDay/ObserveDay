@@ -1,0 +1,39 @@
+<div class="participant-shell">
+  <header class="participant-header">
+    <div class="header-content">
+      <a class="brand" routerLink="/participant/ateliers" aria-label="SmartConseil, ateliers">
+        <span class="brand-mark">S</span>
+        <span class="brand-copy">
+          <strong>SMART CONSEIL</strong>
+          <small>ATELIERS DE FORMATION</small>
+        </span>
+      </a>
+
+      <nav class="participant-nav" aria-label="Navigation principale">
+        <a routerLink="/participant/ateliers" routerLinkActive="active">Les ateliers</a>
+        <a *ngIf="!auth.isAuthenticated" routerLink="/participant/connexion">Connexion</a>
+        <a
+          *ngIf="!auth.isAuthenticated"
+          class="nav-cta"
+          routerLink="/participant/creer-compte"
+        >Créer un compte</a>
+        <span *ngIf="auth.currentParticipant as participant" class="participant-greeting">
+          {{ participant.nom }}
+        </span>
+        <button *ngIf="auth.isAuthenticated" type="button" class="nav-link" (click)="logout()">
+          Déconnexion
+        </button>
+        <a class="staff-link" routerLink="/login">Espace équipe</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="participant-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="participant-footer">
+    <span>SMART CONSEIL</span>
+    <span>Apprendre ensemble, progresser durablement.</span>
+  </footer>
+</div>

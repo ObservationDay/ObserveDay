@@ -36,6 +36,19 @@ class PostgresApiFlowTest extends TestCase
             ->assertCreated()
             ->json('data');
 
+        $cancelledWorkshop = $this->withToken($adminToken)
+            ->postJson('/api/v1/ateliers', [
+                'titre' => 'Cancelled API integration test',
+                'description' => 'This workshop must not appear in the public catalog.',
+                'starts_at' => now()->addDay()->toIso8601String(),
+                'ends_at' => now()->addDays(2)->toIso8601String(),
+                'capacity' => 1,
+                'status' => 'annule',
+                'trainer_id' => null,
+            ])
+            ->assertCreated()
+            ->json('data');
+
         $serviceToken = $this->withToken($adminToken)
             ->postJson('/api/v1/auth/python-token')
             ->assertCreated()
@@ -45,10 +58,13 @@ class PostgresApiFlowTest extends TestCase
             ->postJson('/api/v1/ateliers', [])
             ->assertForbidden();
 
-        $this->withToken($serviceToken)
+        $catalog = $this->withToken($serviceToken)
             ->getJson('/api/v1/integration/ateliers')
             ->assertOk()
-            ->assertJsonPath('data.0.id', $workshop['id']);
+            ->json('data');
+        $catalogIds = array_column($catalog, 'id');
+        $this->assertContains($workshop['id'], $catalogIds);
+        $this->assertNotContains($cancelledWorkshop['id'], $catalogIds);
 
         $participantId = (string) Str::uuid();
         $registrationData = [

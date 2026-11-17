@@ -1,0 +1,79 @@
+<section class="participant-hero">
+  <p class="eyebrow">APPRENDRE ENSEMBLE</p>
+  <h1>Trouvez votre prochain atelier.</h1>
+  <p>
+    Découvrez les ateliers de formation disponibles et réservez votre place en quelques instants.
+  </p>
+  <a
+    *ngIf="!auth.isAuthenticated"
+    class="button button-light"
+    routerLink="/participant/creer-compte"
+  >Créer mon compte</a>
+</section>
+
+<div class="notice notice-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
+<div class="notice notice-success" role="status" *ngIf="successMessage">{{ successMessage }}</div>
+
+<section class="catalog-heading">
+  <div>
+    <p class="eyebrow">LE CATALOGUE</p>
+    <h2>Ateliers ouverts</h2>
+    <p>Les places affichées sont mises à jour depuis la plateforme de gestion.</p>
+  </div>
+  <span class="catalog-count" *ngIf="!isLoading">
+    {{ workshops.length }} résultat{{ workshops.length === 1 ? '' : 's' }}
+  </span>
+</section>
+
+<div class="loading-state" *ngIf="isLoading" role="status">
+  <span class="spinner" aria-hidden="true"></span>
+  <span>Chargement des ateliers…</span>
+</div>
+
+<section class="workshop-grid" *ngIf="!isLoading && workshops.length">
+  <article class="workshop-card" *ngFor="let workshop of workshops">
+    <div class="card-topline">
+      <span class="status-pill">{{ workshop.status }}</span>
+      <span class="seat-count">
+        {{ availableSeats(workshop) }} place{{ availableSeats(workshop) === 1 ? '' : 's' }} restante{{ availableSeats(workshop) === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <h3>{{ workshop.titre }}</h3>
+    <p class="workshop-description">{{ workshop.description }}</p>
+
+    <div class="workshop-details">
+      <div>
+        <span class="detail-label">DATE</span>
+        <strong>{{ workshop.starts_at | date:'EEEE d MMMM y, HH:mm' }}</strong>
+      </div>
+      <div>
+        <span class="detail-label">FORMATEUR</span>
+        <strong>{{ workshop.trainer?.nom || 'À confirmer' }}</strong>
+      </div>
+    </div>
+
+    <button
+      *ngIf="auth.isAuthenticated"
+      class="button button-primary register-button"
+      type="button"
+      [disabled]="availableSeats(workshop) === 0 || pendingWorkshopId !== null"
+      (click)="register(workshop)"
+    >
+      {{ pendingWorkshopId === workshop.id ? 'Inscription…' : 'M’inscrire' }}
+      <span aria-hidden="true">→</span>
+    </button>
+    <a
+      *ngIf="!auth.isAuthenticated"
+      class="button button-primary register-button"
+      routerLink="/participant/connexion"
+      [queryParams]="{ returnUrl: '/participant/ateliers' }"
+    >Se connecter pour s’inscrire</a>
+  </article>
+</section>
+
+<section class="empty-state" *ngIf="!isLoading && workshops.length === 0 && !errorMessage">
+  <span class="empty-icon" aria-hidden="true">▦</span>
+  <h3>Aucun atelier disponible pour le moment</h3>
+  <p>Revenez bientôt pour découvrir les prochaines sessions.</p>
+</section>

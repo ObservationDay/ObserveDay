@@ -8,6 +8,19 @@ export interface StaffUser {
   created_at?: string;
 }
 
+export interface Participant {
+  id: string;
+  nom: string;
+  email: string;
+  created_at?: string | null;
+}
+
+export interface ParticipantAuthResponse {
+  access_token: string;
+  token_type: string;
+  participant: Participant;
+}
+
 export interface Workshop {
   id: string;
   titre: string;
