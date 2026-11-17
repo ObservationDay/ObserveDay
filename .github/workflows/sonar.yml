@@ -42,7 +42,8 @@ jobs:
         run: npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
         working-directory: Front-end Angular
       - name: Normalize Angular coverage paths
-        run: sed -i 's#^SF:src/#SF:Front-end Angular/src/#' Front-end Angular/coverage/smartconseil-frontend/lcov.info
+        run: sed -i 's#^SF:src/#SF:Front-end Angular/src/#' coverage/smartconseil-frontend/lcov.info
+        working-directory: Front-end Angular
       - uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
         with:
           php-version: '8.3'
