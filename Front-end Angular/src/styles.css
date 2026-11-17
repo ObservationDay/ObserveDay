@@ -241,6 +241,12 @@ a {
   font-weight: 700;
 }
 
+.status-pill.status-open,
+.status-pill.status-active {
+  background: #e4f5ee;
+  color: #28775c;
+}
+
 .status-pill.status-cancelled {
   background: #fff0ef;
   color: var(--red);

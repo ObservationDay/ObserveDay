@@ -90,7 +90,11 @@
 <section class="workshop-grid" *ngIf="!isLoading && workshops.length">
   <article class="workshop-card" *ngFor="let workshop of workshops">
     <div class="card-topline">
-      <span class="status-pill">{{ workshop.status }}</span>
+      <span
+        class="status-pill"
+        [class.status-open]="workshop.status === 'ouvert'"
+        [class.status-cancelled]="workshop.status === 'annule'"
+      >{{ workshop.status }}</span>
       <span class="seat-count">
         {{ availableSeats(workshop) }} place{{ availableSeats(workshop) === 1 ? '' : 's' }} restante{{ availableSeats(workshop) === 1 ? '' : 's' }}
       </span>

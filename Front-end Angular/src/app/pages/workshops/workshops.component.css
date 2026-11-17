@@ -11,9 +11,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.editor-heading {
   margin-bottom: 21px;
 }
 
@@ -21,8 +18,7 @@
   margin-bottom: 5px;
 }
 
-.editor-heading h2,
-.panel-heading h2 {
+.editor-heading h2 {
   margin: 0;
   font: 700 16px 'Manrope', sans-serif;
 }
@@ -163,16 +159,6 @@ textarea.form-control {
   margin-top: 4px;
   color: var(--muted);
   font-size: 9px;
-}
-
-.status-open {
-  background: #e4f5ee;
-  color: #28775c;
-}
-
-.status-cancelled {
-  background: #fff0ef;
-  color: var(--red);
 }
 
 .row-actions {

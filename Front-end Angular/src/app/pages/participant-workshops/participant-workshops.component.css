@@ -44,7 +44,6 @@
   box-shadow: var(--shadow);
 }
 .card-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.workshop-card .status-pill { background: var(--mint); color: var(--green); }
 .workshop-card h3 { margin: 21px 0 7px; font: 800 18px 'Manrope', sans-serif; letter-spacing: -.025em; }
 .workshop-description { min-height: 42px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
 .workshop-details { display: grid; gap: 13px; margin: 20px 0; padding-top: 15px; border-top: 1px solid var(--line); }

@@ -132,16 +132,6 @@ td {
   margin-top: 4px;
 }
 
-.status-active {
-  background: #e4f5ee;
-  color: #28775c;
-}
-
-.status-cancelled {
-  background: #fff0ef;
-  color: var(--red);
-}
-
 .action-cell {
   text-align: right;
 }
