@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -16,7 +16,7 @@ describe('ParticipantApiService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, RouterTestingModule],
       providers: [
@@ -32,7 +32,7 @@ describe('ParticipantApiService', () => {
 
   afterEach(() => {
     httpMock.verify();
-    sessionStorage.clear();
+    localStorage.clear();
   });
 
   it('creates a participant account through Python and stores its session', () => {
@@ -57,6 +57,48 @@ describe('ParticipantApiService', () => {
 
     expect(participantAuth.token).toBe('participant-token');
     expect(participantAuth.currentParticipant?.id).toBe('participant-id');
+  });
+
+  it('restores staff authentication in another tab', () => {
+    staffAuth.login({ email: 'admin@example.com', password: 'admin-password' }).subscribe();
+    httpMock.expectOne(`${API_BASE_URL}/auth/login`).flush({
+      access_token: 'staff-token',
+      token_type: 'Bearer',
+      user: {
+        id: 'staff-id',
+        nom: 'Admin',
+        email: 'admin@example.com',
+        role: 'admin',
+      },
+    });
+
+    const anotherTabAuth = new AuthService(TestBed.inject(HttpClient));
+
+    expect(anotherTabAuth.isAuthenticated).toBeTrue();
+    expect(anotherTabAuth.currentUser?.email).toBe('admin@example.com');
+    expect(anotherTabAuth.token).toBe('staff-token');
+  });
+
+  it('restores participant authentication in another tab', () => {
+    participantAuth.login({
+      email: 'participant@example.com',
+      password: 'participant-password',
+    }).subscribe();
+    httpMock.expectOne(`${PARTICIPANT_API_BASE_URL}/auth/login`).flush({
+      access_token: 'participant-token',
+      token_type: 'Bearer',
+      participant: {
+        id: 'participant-id',
+        nom: 'Participant Test',
+        email: 'participant@example.com',
+      },
+    });
+
+    const anotherTabAuth = new ParticipantAuthService(TestBed.inject(HttpClient));
+
+    expect(anotherTabAuth.isAuthenticated).toBeTrue();
+    expect(anotherTabAuth.currentParticipant?.email).toBe('participant@example.com');
+    expect(anotherTabAuth.token).toBe('participant-token');
   });
 
   it('uses the participant token for enrollment without leaking the staff token', () => {

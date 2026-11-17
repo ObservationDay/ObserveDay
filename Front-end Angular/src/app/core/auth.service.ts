@@ -60,19 +60,19 @@ export class AuthService {
   }
 
   clearSession(): void {
-    sessionStorage.removeItem(this.storageKey);
+    localStorage.removeItem(this.storageKey);
     this.session = null;
     this.userSubject.next(null);
   }
 
   private saveSession(session: StaffSession): void {
-    sessionStorage.setItem(this.storageKey, JSON.stringify(session));
+    localStorage.setItem(this.storageKey, JSON.stringify(session));
     this.session = session;
     this.userSubject.next(session.user);
   }
 
   private restoreSession(): StaffSession | null {
-    const raw = sessionStorage.getItem(this.storageKey);
+    const raw = localStorage.getItem(this.storageKey);
     if (!raw) {
       return null;
     }
@@ -83,11 +83,11 @@ export class AuthService {
         return value;
       }
     } catch {
-      sessionStorage.removeItem(this.storageKey);
+      localStorage.removeItem(this.storageKey);
       return null;
     }
 
-    sessionStorage.removeItem(this.storageKey);
+    localStorage.removeItem(this.storageKey);
     return null;
   }
 

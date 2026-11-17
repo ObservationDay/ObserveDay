@@ -65,7 +65,7 @@ export class ParticipantAuthService {
   }
 
   clearSession(): void {
-    sessionStorage.removeItem(this.storageKey);
+    localStorage.removeItem(this.storageKey);
     this.session = null;
     this.participantSubject.next(null);
   }
@@ -75,13 +75,13 @@ export class ParticipantAuthService {
       token: response.access_token,
       participant: response.participant,
     };
-    sessionStorage.setItem(this.storageKey, JSON.stringify(session));
+    localStorage.setItem(this.storageKey, JSON.stringify(session));
     this.session = session;
     this.participantSubject.next(session.participant);
   }
 
   private restoreSession(): ParticipantSession | null {
-    const raw = sessionStorage.getItem(this.storageKey);
+    const raw = localStorage.getItem(this.storageKey);
     if (!raw) {
       return null;
     }
@@ -92,11 +92,11 @@ export class ParticipantAuthService {
         return value;
       }
     } catch {
-      sessionStorage.removeItem(this.storageKey);
+      localStorage.removeItem(this.storageKey);
       return null;
     }
 
-    sessionStorage.removeItem(this.storageKey);
+    localStorage.removeItem(this.storageKey);
     return null;
   }
 
