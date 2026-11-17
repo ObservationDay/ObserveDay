@@ -15,6 +15,8 @@ def create_app(test_config=None):
         SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL"),
         SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
         JWT_SECRET_KEY=os.getenv("JWT_SECRET_KEY"),
+        # Explicit bearer headers avoid ambient cookie authentication and CSRF.
+        JWT_TOKEN_LOCATION=["headers"],
         JWT_ALGORITHM="HS256",
         JWT_ACCESS_TOKEN_EXPIRES=timedelta(minutes=30),
         LARAVEL_API_URL=os.getenv(

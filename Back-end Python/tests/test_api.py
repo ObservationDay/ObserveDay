@@ -109,6 +109,17 @@ class ParticipantApiTests(unittest.TestCase):
         self.assertEqual(profile.status_code, 200)
         self.assertEqual(profile.get_json()["data"]["email"], "participant@example.com")
 
+    def test_participant_jwt_is_not_accepted_from_cookies(self):
+        created = self.create_participant()
+        token = created.get_json()["access_token"]
+
+        response = self.client.get(
+            "/api/v1/participants/me",
+            headers={"Cookie": f"access_token_cookie={token}"},
+        )
+
+        self.assertEqual(response.status_code, 401)
+
     def test_duplicate_email_is_rejected_case_insensitively(self):
         self.assertEqual(self.create_participant().status_code, 201)
 
