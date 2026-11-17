@@ -64,25 +64,33 @@ flowchart LR
 
 ## Choix techniques
 
-| Technologie | Version retenue | Justification |
-| --- | --- | --- |
-| Angular, TypeScript, RxJS | Angular 16.2, TypeScript 5.1, RxJS 7.8 | Angular 16 est une version autorisée par le sujet et fournit le routage, les services HTTP, les formulaires réactifs et les composants modulaires requis. |
-| Node.js | 18.20 | Environnement compatible avec la version Angular retenue. |
-| Laravel, PHP, Sanctum | Laravel 13, PHP 8.4.1+, Sanctum 4 | Laravel gère l’API métier, les migrations, la validation, l’ORM Eloquent et l’authentification des équipes. PHP 8.4.1 est requis par les versions Symfony verrouillées. |
-| Flask, Python, SQLAlchemy | Flask 3.1, Python 3.12, SQLAlchemy 2 | Flask fournit une API légère pour les participants; SQLAlchemy persiste leurs comptes avec un ORM. Flask-Migrate/Alembic versionne le schéma Python. |
-| Requests | 2.32 | Requests permet à Flask de récupérer l’historique participant depuis Laravel avec un délai d’attente et un jeton serveur limité. |
-| PostgreSQL | 17 | Base relationnelle commune, avec des schémas et des migrations séparés selon le propriétaire des données. |
-| API | REST, JSON, `/api/v1` | Format simple et versionné pour les échanges entre le navigateur et les deux API. |
+Le sujet propose Angular 14 ou 16, Laravel/PHP, Flask ou Django et PostgreSQL
+ou MySQL. Il ne fixe pas de versions précises pour PHP, Python, Node.js ou la
+base de données. Les versions ci-dessous suivent les dépendances verrouillées,
+la compatibilité des frameworks et la configuration CI du projet.
 
-Angular 16 et Node.js 18 sont retenus pour respecter le cadre de l’exercice; ce
-sont des versions anciennes à prendre en compte pour un nouveau projet.
+| Technologie | Proposition du sujet | Choix du projet et raison |
+| --- | --- | --- |
+| Angular, TypeScript, RxJS | Angular 14 ou 16 | Angular 16.2 (core 16.2.12, CLI 16.2.16), TypeScript 5.1.6 et RxJS 7.8.2. Angular 16 est l’option la plus récente permise par le sujet; ces versions sont compatibles avec le code et son outillage verrouillé. |
+| Node.js | Non précisé | Node 18.20 pour Angular 16; le CI utilise Node 18. Le build Vite facultatif de Laravel requiert Node 20.19 ou supérieur, mais n’est pas nécessaire pour lancer l’API Laravel. |
+| Laravel, PHP, Sanctum | Laravel/PHP, sans version précisée | Laravel 13.42 et Sanctum 4.4 gèrent l’API métier et les jetons d’équipe. Le manifeste autorise PHP 8.3+, mais les dépendances Symfony 8 verrouillées exigent PHP 8.4.1 ou supérieur. |
+| Flask, Python, SQLAlchemy | Flask ou Django | Flask 3.1.3 est choisi pour l’API participant, plus réduite qu’une application Django complète. Python 3.12 est la version du CI; SQLAlchemy 2.0.58 persiste les comptes et Alembic versionne leur schéma. |
+| Requests | Appels HTTP Python → Laravel suggérés | Requests 2.34.2 sert à récupérer l’historique participant depuis Laravel avec un délai d’attente et un jeton serveur limité. |
+| PostgreSQL | PostgreSQL ou MySQL | PostgreSQL 17 en développement; le CI teste aussi avec PostgreSQL 16. Ses schémas permettent de séparer `gestion` (Laravel) et `participants` (Flask) dans une même base. |
+| API | API REST attendue | REST/JSON sous `/api/v1` fournit des contrats explicites entre Angular, Flask et Laravel. |
+
+Angular 16 et Node 18 répondent donc aux options de l’exercice; les autres
+versions sont des choix de compatibilité propres au projet, pas des exigences
+imposées par le sujet. Si vous devez construire les assets Vite de Laravel,
+utilisez Node 20.19+ pour cette commande, séparément du démarrage API décrit ici.
 
 ## Prérequis
 
 - Windows PowerShell (les commandes ci-dessous sont prévues pour Windows).
 - PHP 8.4.1 ou supérieur et Composer.
 - Python 3.12.
-- Node.js 18 et npm.
+- Node.js 18 et npm pour Angular. Le build Vite facultatif de Laravel nécessite
+  Node.js 20.19 ou supérieur.
 - PostgreSQL 17 en fonctionnement.
 
 ## Installation locale
@@ -126,6 +134,16 @@ La commande `app:create-admin` demande le nom, l’adresse courriel et un mot de
 passe administrateur. Les migrations Laravel créent les tables du schéma
 `gestion`.
 
+Le dépôt ne crée aucun compte de démonstration: le seeder Laravel est vide.
+L’administrateur est créé avec la commande ci-dessus; il n’existe pas de
+courriel ou mot de passe formateur par défaut. La création de formateur n’a pas
+d’écran Angular: un administrateur la fait via l’API, après avoir obtenu son
+jeton à l’étape suivante. Ne mettez pas de vrais mots de passe dans le dépôt.
+Les participants créent eux-mêmes leur compte sur
+`http://127.0.0.1:4200/participant/creer-compte`. Les mots de passe de la
+factory Laravel (`password`) sont réservés aux tests automatisés et ne sont
+pas des identifiants d’application.
+
 ### 3. Créer un jeton de service Laravel
 
 Après avoir démarré Laravel, ouvrez un autre terminal PowerShell et remplacez
@@ -154,6 +172,26 @@ Copiez le jeton affiché uniquement dans le fichier `.env` local de Flask, sous
 Les nouveaux jetons ont uniquement le droit `registrations:read`. Les anciens
 jetons conservent leurs droits précédents jusqu’à leur révocation; révoquez tout
 ancien jeton Python puis créez-en un nouveau.
+
+#### Créer deux comptes formateur de test
+
+Le jeton administrateur obtenu plus haut doit être envoyé comme bearer token à
+`POST /api/v1/formateurs`. Répétez la requête avec un courriel unique pour
+chaque compte; choisissez les mots de passe localement (12 caractères minimum),
+puis connectez-vous sur `http://127.0.0.1:4200/login`:
+
+```http
+POST http://127.0.0.1:8000/api/v1/formateurs
+Authorization: Bearer <jeton-administrateur>
+Content-Type: application/json
+
+{
+  "nom": "<nom-du-formateur>",
+  "email": "<adresse-courriel-unique>",
+  "password": "<mot-de-passe-local>",
+  "password_confirmation": "<meme-mot-de-passe>"
+}
+```
 
 ### 4. Installer et configurer Flask
 
