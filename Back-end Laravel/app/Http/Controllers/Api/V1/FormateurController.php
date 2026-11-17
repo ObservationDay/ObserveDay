@@ -29,9 +29,7 @@ class FormateurController extends Controller
     {
         abort_unless($formateur->role === 'formateur', 404);
 
-        return (new UserResource($formateur))
-            ->response()
-            ->setStatusCode(201);
+        return new UserResource($formateur);
     }
 
     public function store(StoreFormateurRequest $request): JsonResponse
@@ -44,7 +42,9 @@ class FormateurController extends Controller
             'role' => 'formateur',
         ]);
 
-        return new UserResource($formateur);
+        return (new UserResource($formateur))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function update(UpdateFormateurRequest $request, User $formateur): UserResource

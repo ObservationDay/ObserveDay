@@ -2,8 +2,12 @@ import unittest
 from unittest.mock import Mock, patch
 from uuid import UUID
 
+from flask_migrate import upgrade
+from sqlalchemy import text
+
 from participant_api import create_app
 from participant_api.extensions import db
+from participant_api.models import Participant
 
 
 class ParticipantApiTests(unittest.TestCase):
@@ -20,7 +24,7 @@ class ParticipantApiTests(unittest.TestCase):
         )
         self.client = self.app.test_client()
         with self.app.app_context():
-            db.create_all()
+            upgrade()
 
     def tearDown(self):
         with self.app.app_context():
@@ -49,9 +53,29 @@ class ParticipantApiTests(unittest.TestCase):
         )
 
     def test_database_initialization_command_is_idempotent(self):
-        result = self.app.test_cli_runner().invoke(args=["init-db"])
+        runner = self.app.test_cli_runner()
+
+        first_result = runner.invoke(args=["init-db"])
+        second_result = runner.invoke(args=["init-db"])
+        check_result = runner.invoke(args=["db", "check"])
+
+        self.assertEqual(first_result.exit_code, 0, first_result.output)
+        self.assertEqual(second_result.exit_code, 0, second_result.output)
+        self.assertEqual(check_result.exit_code, 0, check_result.output)
+
+    def test_existing_participant_data_survives_migration_baseline_stamp(self):
+        response = self.create_participant()
+        participant_id = UUID(response.get_json()["participant"]["id"])
+
+        with self.app.app_context():
+            db.session.execute(text("DROP TABLE alembic_version"))
+            db.session.commit()
+
+        result = self.app.test_cli_runner().invoke(args=["db", "stamp", "head"])
 
         self.assertEqual(result.exit_code, 0, result.output)
+        with self.app.app_context():
+            self.assertIsNotNone(db.session.get(Participant, participant_id))
 
     def test_participant_account_is_created_with_a_hashed_password_and_jwt(self):
         response = self.create_participant()

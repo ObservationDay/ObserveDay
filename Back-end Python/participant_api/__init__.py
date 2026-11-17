@@ -3,9 +3,10 @@ from datetime import timedelta
 
 from flask import Flask, jsonify
 from flask_cors import CORS
-from sqlalchemy import event, text
+from flask_migrate import upgrade
+from sqlalchemy import event
 
-from .extensions import db, jwt
+from .extensions import db, jwt, migrate
 
 
 def create_app(test_config=None):
@@ -35,6 +36,12 @@ def create_app(test_config=None):
 
     db.init_app(app)
     jwt.init_app(app)
+    migrate.init_app(
+        app,
+        db,
+        directory=os.path.join(os.path.dirname(__file__), "..", "migrations"),
+        compare_type=True,
+    )
 
     with app.app_context():
         if db.engine.dialect.name == "sqlite":
@@ -71,11 +78,7 @@ def create_app(test_config=None):
 
     @app.cli.command("init-db")
     def init_db():
-        with app.app_context():
-            if db.engine.dialect.name == "postgresql":
-                db.session.execute(text("CREATE SCHEMA IF NOT EXISTS participants"))
-                db.session.commit()
-            db.create_all()
+        upgrade()
         print("Participant database schema is ready.")
 
     return app
