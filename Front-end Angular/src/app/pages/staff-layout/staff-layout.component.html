@@ -1,0 +1,54 @@
+<div class="workspace">
+  <aside class="sidebar">
+    <a class="sidebar-brand" routerLink="/app/ateliers">
+      <span class="brand-mark">S</span>
+      <span>
+        <strong>SMART CONSEIL</strong>
+        <small>FORMATION</small>
+      </span>
+    </a>
+
+    <div class="workspace-label">ESPACE DE GESTION</div>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <a routerLink="/app/ateliers" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">▦</span>
+        <span>Ateliers</span>
+      </a>
+      <a routerLink="/app/inscriptions" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">◎</span>
+        <span>Inscriptions</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="help-card">
+        <span class="help-icon" aria-hidden="true">i</span>
+        <div>
+          <strong>Besoin d’aide ?</strong>
+          <p>Contactez votre administrateur pour obtenir de l’assistance.</p>
+        </div>
+      </div>
+      <div class="sidebar-footer">SMART CONSEIL · 2026</div>
+    </div>
+  </aside>
+
+  <div class="main-column">
+    <header class="topbar">
+      <div class="breadcrumb"><span>Plateforme</span><span class="breadcrumb-separator">/</span><strong>Gestion</strong></div>
+      <div class="user-menu">
+        <span class="user-avatar" aria-hidden="true">{{ auth.currentUser?.nom?.charAt(0) || 'S' }}</span>
+        <span class="user-details">
+          <strong>{{ auth.currentUser?.nom }}</strong>
+          <small>{{ auth.currentUser?.role === 'admin' ? 'Administrateur' : 'Formateur' }}</small>
+        </span>
+        <button class="logout-button" type="button" (click)="logout()" aria-label="Se déconnecter" title="Se déconnecter">
+          <span aria-hidden="true">↪</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

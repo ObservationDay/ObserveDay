@@ -1,0 +1,157 @@
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">GESTION DES FORMATIONS</p>
+    <h1>Ateliers</h1>
+    <p class="page-description">
+      {{ isAdmin ? 'Créez vos ateliers et gérez les formateurs associés.' : 'Retrouvez les ateliers que vous animez.' }}
+    </p>
+  </div>
+  <button *ngIf="isAdmin" class="button button-primary" type="button" (click)="startCreate()">
+    <span aria-hidden="true">＋</span> Nouvel atelier
+  </button>
+</section>
+
+<div class="notice notice-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
+<div class="notice notice-success" role="status" *ngIf="successMessage">{{ successMessage }}</div>
+<div class="notice notice-error" role="alert" *ngIf="trainerError">{{ trainerError }}</div>
+
+<section class="editor-panel" *ngIf="editorOpen && isAdmin" aria-labelledby="editor-title">
+  <div class="editor-heading">
+    <div>
+      <p class="eyebrow">{{ editingId ? 'MODIFICATION' : 'NOUVELLE FORMATION' }}</p>
+      <h2 id="editor-title">{{ editingId ? 'Modifier l’atelier' : 'Créer un atelier' }}</h2>
+    </div>
+    <button class="icon-button" type="button" aria-label="Fermer le formulaire" (click)="closeEditor()">×</button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="editor-grid">
+      <div class="form-field field-wide">
+        <label for="titre">Nom de l’atelier <span>*</span></label>
+        <input id="titre" class="form-control" type="text" formControlName="titre" maxlength="180" placeholder="Ex. Initiation à la gestion de projet" />
+        <small class="validation-message" *ngIf="form.controls.titre.touched && form.controls.titre.invalid">Le nom est obligatoire (180 caractères maximum).</small>
+      </div>
+
+      <div class="form-field field-wide">
+        <label for="description">Description <span>*</span></label>
+        <textarea id="description" class="form-control" formControlName="description" rows="3" placeholder="Présentez les objectifs de l’atelier…"></textarea>
+        <small class="validation-message" *ngIf="form.controls.description.touched && form.controls.description.invalid">La description est obligatoire.</small>
+      </div>
+
+      <div class="form-field">
+        <label for="starts_at">Début <span>*</span></label>
+        <input id="starts_at" class="form-control" type="datetime-local" formControlName="starts_at" />
+        <small class="validation-message" *ngIf="form.controls.starts_at.touched && form.controls.starts_at.invalid">La date de début est obligatoire.</small>
+      </div>
+
+      <div class="form-field">
+        <label for="ends_at">Fin <span>*</span></label>
+        <input id="ends_at" class="form-control" type="datetime-local" formControlName="ends_at" [min]="form.controls.starts_at.value" />
+        <small class="validation-message" *ngIf="form.controls.ends_at.touched && form.controls.ends_at.invalid">La date de fin est obligatoire.</small>
+        <small class="validation-message" *ngIf="form.controls.ends_at.touched && form.hasError('invalidDateRange')">La fin doit être après le début.</small>
+      </div>
+
+      <div class="form-field">
+        <label for="capacity">Nombre de places <span>*</span></label>
+        <input id="capacity" class="form-control" type="number" min="1" formControlName="capacity" />
+        <small class="validation-message" *ngIf="form.controls.capacity.touched && form.controls.capacity.invalid">Indiquez au moins une place.</small>
+      </div>
+
+      <div class="form-field">
+        <label for="status">Statut</label>
+        <select id="status" class="form-control" formControlName="status">
+          <option value="ouvert">Ouvert</option>
+          <option value="complet">Complet</option>
+          <option value="annule">Annulé</option>
+        </select>
+      </div>
+
+      <div class="form-field field-wide">
+        <label for="trainer_id">Formateur</label>
+        <select id="trainer_id" class="form-control" formControlName="trainer_id">
+          <option value="">Aucun formateur assigné</option>
+          <option *ngFor="let trainer of trainers" [value]="trainer.id">{{ trainer.nom }} · {{ trainer.email }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="editor-actions">
+      <span class="required-note"><span>*</span> Champs obligatoires</span>
+      <div>
+        <button class="button button-quiet" type="button" (click)="closeEditor()">Annuler</button>
+        <button class="button button-primary" type="submit" [disabled]="isSaving">
+          {{ isSaving ? 'Enregistrement…' : (editingId ? 'Enregistrer' : 'Créer l’atelier') }}
+        </button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<section class="data-panel">
+  <div class="panel-heading">
+    <div>
+      <h2>Liste des ateliers</h2>
+      <p>{{ workshops.length }} atelier{{ workshops.length === 1 ? '' : 's' }} affiché{{ workshops.length === 1 ? '' : 's' }}</p>
+    </div>
+    <span class="panel-tag">{{ isAdmin ? 'ADMINISTRATION' : 'MES ATELIERS' }}</span>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Chargement des ateliers…</span>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && workshops.length === 0">
+    <span class="empty-icon" aria-hidden="true">▦</span>
+    <h3>Aucun atelier pour le moment</h3>
+    <p>{{ isAdmin ? 'Créez un premier atelier pour commencer.' : 'Les ateliers qui vous sont assignés apparaîtront ici.' }}</p>
+    <button *ngIf="isAdmin" class="button button-primary" type="button" (click)="startCreate()">Créer un atelier</button>
+  </div>
+
+  <div class="table-wrap" *ngIf="!isLoading && workshops.length">
+    <table>
+      <thead>
+        <tr>
+          <th>ATELIER</th>
+          <th>DATE</th>
+          <th>FORMATEUR</th>
+          <th>INSCRIPTIONS</th>
+          <th>STATUT</th>
+          <th *ngIf="isAdmin"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let workshop of workshops">
+          <td>
+            <div class="workshop-name">{{ workshop.titre }}</div>
+            <div class="workshop-description">{{ workshop.description }}</div>
+          </td>
+          <td class="date-cell">
+            <strong>{{ workshop.starts_at | date:'d MMM y' }}</strong>
+            <span>{{ workshop.starts_at | date:'HH:mm' }} – {{ workshop.ends_at | date:'HH:mm' }}</span>
+          </td>
+          <td>
+            <span class="trainer-name" *ngIf="workshop.trainer; else noTrainer">{{ workshop.trainer.nom }}</span>
+            <ng-template #noTrainer><span class="muted-text">Non assigné</span></ng-template>
+          </td>
+          <td>
+            <div class="seats-value">{{ workshop.active_registrations ?? 0 }} <span>/ {{ workshop.capacity }}</span></div>
+            <div class="seats-caption">{{ workshop.available_seats ?? workshop.capacity }} place{{ (workshop.available_seats ?? workshop.capacity) === 1 ? '' : 's' }} restante{{ (workshop.available_seats ?? workshop.capacity) === 1 ? '' : 's' }}</div>
+          </td>
+          <td><span class="status-pill" [class.status-open]="workshop.status === 'ouvert'" [class.status-cancelled]="workshop.status === 'annule'">{{ workshop.status }}</span></td>
+          <td class="actions-cell" *ngIf="isAdmin">
+            <div class="row-actions" *ngIf="pendingDeleteId !== workshop.id">
+              <button type="button" class="text-action" (click)="startEdit(workshop)">Modifier</button>
+              <button type="button" class="text-action danger-action" (click)="requestDelete(workshop)">Supprimer</button>
+            </div>
+            <div class="row-actions confirm-actions" *ngIf="pendingDeleteId === workshop.id">
+              <span>Confirmer ?</span>
+              <button type="button" class="text-action danger-action" (click)="deleteWorkshop(workshop)">Oui</button>
+              <button type="button" class="text-action" (click)="cancelDelete()">Non</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

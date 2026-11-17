@@ -1,0 +1,75 @@
+<main class="login-page">
+  <section class="login-card" aria-labelledby="login-title">
+    <a class="brand" routerLink="/" aria-label="SmartConseil, accueil">
+      <span class="brand-mark">S</span>
+      <span class="brand-copy">
+        <strong>SMART CONSEIL</strong>
+        <small>FORMATION</small>
+      </span>
+    </a>
+
+    <div class="login-intro">
+      <p class="eyebrow">ESPACE ÉQUIPE</p>
+      <h1 id="login-title">Ravi de vous revoir.</h1>
+      <p>Connectez-vous pour gérer les ateliers et suivre les inscriptions.</p>
+    </div>
+
+    <div class="alert alert-error" role="alert" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label for="email">Adresse e-mail</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          autocomplete="username"
+          placeholder="nom@smartconseil.fr"
+          [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+        />
+        <small class="field-error" *ngIf="form.controls.email.touched && form.controls.email.invalid">
+          Saisissez une adresse e-mail valide.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="password">Mot de passe</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          placeholder="Votre mot de passe"
+          [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+        />
+        <small class="field-error" *ngIf="form.controls.password.touched && form.controls.password.invalid">
+          Le mot de passe est obligatoire.
+        </small>
+      </div>
+
+      <button class="button button-primary login-submit" type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Connexion…' : 'Se connecter' }}
+        <span aria-hidden="true">→</span>
+      </button>
+    </form>
+
+    <p class="login-footnote">Accès réservé aux administrateurs et formateurs.</p>
+  </section>
+
+  <aside class="login-aside" aria-label="Présentation de la plateforme">
+    <div class="aside-orb orb-one"></div>
+    <div class="aside-orb orb-two"></div>
+    <div class="aside-content">
+      <span class="aside-kicker">APPRENDRE ENSEMBLE</span>
+      <h2>Des ateliers qui font grandir les idées.</h2>
+      <p>Une plateforme simple pour organiser les formations et accompagner chaque participant.</p>
+      <div class="aside-note">
+        <span class="note-dot"></span>
+        <span>Votre espace de gestion des formations</span>
+      </div>
+    </div>
+    <span class="aside-footer">SMART CONSEIL · PLATEFORME DE FORMATION</span>
+  </aside>
+</main>

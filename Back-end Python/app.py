@@ -1,8 +1,3 @@
-from flask import Flask
+from participant_api import create_app
 
-app = Flask(__name__)
-
-
-@app.get("/")
-def index():
-    return {"message": "SmartConseil participant API"}
+app = create_app()

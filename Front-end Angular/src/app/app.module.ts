@@ -1,16 +1,66 @@
-import { NgModule } from '@angular/core';
+import { LOCALE_ID, NgModule } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import localeFr from '@angular/common/locales/fr';
+import { ReactiveFormsModule } from '@angular/forms';
+import { RouterModule, Routes } from '@angular/router';
 
 import { AppComponent } from './app.component';
+import { AuthGuard } from './core/auth.guard';
+import { AuthInterceptor } from './core/auth.interceptor';
+import { RoleGuard } from './core/role.guard';
+import { LoginComponent } from './pages/login/login.component';
+import { RegistrationsComponent } from './pages/registrations/registrations.component';
+import { StaffLayoutComponent } from './pages/staff-layout/staff-layout.component';
+import { WorkshopsComponent } from './pages/workshops/workshops.component';
+
+registerLocaleData(localeFr, 'fr-FR');
+
+const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  {
+    path: 'app',
+    component: StaffLayoutComponent,
+    canActivate: [AuthGuard],
+    children: [
+      { path: '', redirectTo: 'ateliers', pathMatch: 'full' },
+      {
+        path: 'ateliers',
+        component: WorkshopsComponent,
+        canActivate: [RoleGuard],
+        data: { roles: ['admin', 'formateur'] },
+      },
+      {
+        path: 'inscriptions',
+        component: RegistrationsComponent,
+        canActivate: [RoleGuard],
+        data: { roles: ['admin', 'formateur'] },
+      },
+    ],
+  },
+  { path: '', redirectTo: 'app', pathMatch: 'full' },
+  { path: '**', redirectTo: 'app' },
+];
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    LoginComponent,
+    RegistrationsComponent,
+    StaffLayoutComponent,
+    WorkshopsComponent,
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    HttpClientModule,
+    ReactiveFormsModule,
+    RouterModule.forRoot(routes),
   ],
-  providers: [],
-  bootstrap: [AppComponent]
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    { provide: LOCALE_ID, useValue: 'fr-FR' },
+  ],
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

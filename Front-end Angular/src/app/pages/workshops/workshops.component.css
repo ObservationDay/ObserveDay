@@ -1,0 +1,237 @@
+.editor-panel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  padding: 22px;
+}
+
+.editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editor-heading {
+  margin-bottom: 21px;
+}
+
+.editor-heading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.editor-heading h2,
+.panel-heading h2 {
+  margin: 0;
+  font: 700 16px 'Manrope', sans-serif;
+}
+
+.icon-button {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 20px;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field-wide {
+  grid-column: 1 / -1;
+}
+
+.form-field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.form-field label {
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.form-field label span,
+.required-note span {
+  color: var(--red);
+}
+
+.form-control {
+  min-height: 39px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  outline: none;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+textarea.form-control {
+  min-height: 82px;
+  resize: vertical;
+}
+
+.form-control:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(40, 116, 166, 0.1);
+}
+
+.validation-message {
+  color: var(--red);
+  font-size: 10px;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 21px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+
+.required-note {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.workshop-name {
+  max-width: 250px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workshop-description {
+  max-width: 250px;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date-cell {
+  min-width: 112px;
+}
+
+.date-cell strong,
+.date-cell span {
+  display: block;
+}
+
+.date-cell span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.trainer-name {
+  font-weight: 600;
+}
+
+.muted-text {
+  color: var(--muted);
+}
+
+.seats-value {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.seats-value span {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.seats-caption {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.status-open {
+  background: #e4f5ee;
+  color: #28775c;
+}
+
+.status-cancelled {
+  background: #fff0ef;
+  color: var(--red);
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.confirm-actions {
+  gap: 7px;
+}
+
+.confirm-actions span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+@media (max-width: 650px) {
+  .page-heading {
+    align-items: flex-start;
+  }
+
+  .page-heading h1 {
+    font-size: 24px;
+  }
+
+  .page-heading > .button {
+    flex-shrink: 0;
+    padding: 0 10px;
+  }
+
+  .editor-panel {
+    padding: 17px;
+  }
+
+  .editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-wide {
+    grid-column: auto;
+  }
+
+  .editor-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editor-actions > div {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  th,
+  td {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}

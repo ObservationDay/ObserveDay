@@ -1,0 +1,104 @@
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">SUIVI DES PARTICIPANTS</p>
+    <h1>Inscriptions</h1>
+    <p class="page-description">
+      {{ isTrainer ? 'Les inscriptions aux ateliers que vous animez.' : 'Toutes les inscriptions aux ateliers.' }}
+    </p>
+  </div>
+  <span class="sync-label"><span class="sync-dot"></span> Données Laravel</span>
+</section>
+
+<div class="notice notice-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
+<div class="notice notice-success" role="status" *ngIf="successMessage">{{ successMessage }}</div>
+
+<section class="summary-grid" aria-label="Résumé des inscriptions">
+  <article class="summary-card">
+    <span class="summary-icon icon-blue" aria-hidden="true">◎</span>
+    <div><small>INSCRIPTIONS</small><strong>{{ registrations.length }}</strong></div>
+  </article>
+  <article class="summary-card">
+    <span class="summary-icon icon-green" aria-hidden="true">✓</span>
+    <div><small>CONFIRMÉES</small><strong>{{ activeCount }}</strong></div>
+  </article>
+  <article class="summary-card">
+    <span class="summary-icon icon-gray" aria-hidden="true">↗</span>
+    <div><small>ANNULÉES</small><strong>{{ cancelledCount }}</strong></div>
+  </article>
+</section>
+
+<section class="data-panel">
+  <div class="panel-heading">
+    <div>
+      <h2>Participants inscrits</h2>
+      <p>Les listes sont filtrées selon votre rôle et vos ateliers.</p>
+    </div>
+    <span class="panel-tag">{{ isTrainer ? 'MES ATELIERS' : 'TOUS LES ATELIERS' }}</span>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Chargement des inscriptions…</span>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && registrations.length === 0">
+    <span class="empty-icon" aria-hidden="true">◎</span>
+    <h3>Aucune inscription à afficher</h3>
+    <p>Les inscriptions aux ateliers apparaîtront ici.</p>
+  </div>
+
+  <div class="table-wrap" *ngIf="!isLoading && registrations.length">
+    <table>
+      <thead>
+        <tr>
+          <th>PARTICIPANT</th>
+          <th>ATELIER</th>
+          <th>DATE DE L’ATELIER</th>
+          <th>INSCRIT LE</th>
+          <th>STATUT</th>
+          <th><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let registration of registrations">
+          <td>
+            <div class="participant-cell">
+              <span class="participant-avatar" aria-hidden="true">{{ registration.participant.nom_affiche.charAt(0) || 'P' }}</span>
+              <span>
+                <strong>{{ registration.participant.nom_affiche }}</strong>
+                <small>{{ registration.participant.email }}</small>
+              </span>
+            </div>
+          </td>
+          <td><span class="workshop-title">{{ registration.workshop.titre }}</span></td>
+          <td>
+            <strong>{{ registration.workshop.starts_at | date:'d MMM y' }}</strong>
+            <small class="secondary-line">{{ registration.workshop.starts_at | date:'HH:mm' }}</small>
+          </td>
+          <td>
+            <strong>{{ registration.registered_at | date:'d MMM y' }}</strong>
+            <small class="secondary-line">{{ registration.registered_at | date:'HH:mm' }}</small>
+          </td>
+          <td>
+            <span class="status-pill" [class.status-active]="registration.status === 'inscrit'" [class.status-cancelled]="registration.status === 'annule'">
+              {{ registration.status === 'inscrit' ? 'Confirmée' : 'Annulée' }}
+            </span>
+          </td>
+          <td class="action-cell">
+            <ng-container *ngIf="registration.status === 'inscrit'">
+              <div class="confirm-actions" *ngIf="pendingCancelId === registration.id; else cancelButton">
+                <button class="text-action danger-action" type="button" [disabled]="isCancelling" (click)="cancelRegistration(registration)">
+                  {{ isCancelling ? 'Annulation…' : 'Confirmer' }}
+                </button>
+                <button class="text-action" type="button" (click)="cancelConfirmation()">Garder</button>
+              </div>
+              <ng-template #cancelButton>
+                <button class="text-action danger-action" type="button" (click)="confirmCancellation(registration)">Annuler l’inscription</button>
+              </ng-template>
+            </ng-container>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
