@@ -2,15 +2,19 @@
 
 namespace App\Models;
 
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Workshop extends Model
 {
     use HasUuids;
+
+    public const STATUS_CANCELLED = 'annule';
 
     protected $table = 'gestion.ateliers';
 
@@ -45,6 +49,22 @@ class Workshop extends Model
                 'capacity > (SELECT COUNT(*) FROM gestion.inscriptions WHERE gestion.inscriptions.workshop_id = gestion.ateliers.id AND gestion.inscriptions.status = ?)',
                 [Registration::STATUS_REGISTERED],
             );
+    }
+
+    public function scopeOverlappingSchedule(
+        Builder $query,
+        string $trainerId,
+        DateTimeInterface|string $startsAt,
+        DateTimeInterface|string $endsAt,
+    ): Builder {
+        $startsAt = Carbon::parse($startsAt)->utc();
+        $endsAt = Carbon::parse($endsAt)->utc();
+
+        return $query
+            ->where('trainer_id', $trainerId)
+            ->where('status', '!=', self::STATUS_CANCELLED)
+            ->where('starts_at', '<', $endsAt)
+            ->where('ends_at', '>', $startsAt);
     }
 
     public function trainer(): BelongsTo

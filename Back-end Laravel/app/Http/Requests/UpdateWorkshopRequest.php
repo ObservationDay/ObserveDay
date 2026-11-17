@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use App\Models\Workshop;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -46,6 +47,38 @@ class UpdateWorkshopRequest extends FormRequest
 
                 if (strtotime((string) $endsAt) <= strtotime((string) $startsAt)) {
                     $validator->errors()->add('ends_at', 'The end date must be after the start date.');
+
+                    return;
+                }
+
+                if (
+                    $validator->errors()->has('trainer_id')
+                    || $validator->errors()->has('status')
+                ) {
+                    return;
+                }
+
+                $trainerId = $this->input('trainer_id', $workshop->trainer_id);
+                $status = $this->input('status', $workshop->status);
+
+                if (! $trainerId || $status === Workshop::STATUS_CANCELLED) {
+                    return;
+                }
+
+                $hasOverlap = Workshop::query()
+                    ->overlappingSchedule(
+                        (string) $trainerId,
+                        $startsAt,
+                        $endsAt,
+                    )
+                    ->where('id', '<>', $workshop->getKey())
+                    ->exists();
+
+                if ($hasOverlap) {
+                    $validator->errors()->add(
+                        'trainer_id',
+                        'The trainer already has a workshop scheduled during this time.',
+                    );
                 }
             },
         ];

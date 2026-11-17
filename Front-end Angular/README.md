@@ -28,6 +28,28 @@ npm start
 
 The staff interface remains available at `/login`.
 
+## End-to-end participant test
+
+The Playwright test creates a participant and registration, then checks that an admin can see the registration. It writes persistent records, so point both Laravel and Flask at a **disposable PostgreSQL test database** with migrations initialized, an admin account, and at least one open workshop with available seats. Do not run it against your normal development or production database. The `E2E_TEST_DATABASE` flag is an acknowledgement only; it cannot verify which database the APIs use.
+
+Create a separate database, set Laravel's `DB_DATABASE` and Python's `DATABASE_URL` to it, then run Laravel migrations and Python's `init-db`. Create a test admin, issue a Python service token from that Laravel database, configure it in Python's `.env`, and create an open workshop with available seats. Start Laravel and Flask against this test database. Test records remain in that database after the run; recreate or clear only the disposable test database before another clean run.
+
+Create a local settings file (it is ignored by Git) and fill in the test admin credentials:
+
+```powershell
+if (-not (Test-Path .env.e2e.local)) {
+  Copy-Item .env.e2e.local.example .env.e2e.local
+}
+```
+
+Set `E2E_TEST_DATABASE=true` in `.env.e2e.local` only after confirming both APIs use the disposable database. From this folder, run:
+
+```powershell
+npm run test:e2e
+```
+
+The test uses Brave from its default Windows installation path when available. Set `PLAYWRIGHT_EXECUTABLE_PATH` if Brave is installed elsewhere. Playwright starts Angular automatically; Laravel and Flask must already be running on ports 8000 and 5000.
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
