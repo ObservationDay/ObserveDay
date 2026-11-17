@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 
 import { AuthService } from '../../core/auth.service';
 import { getApiErrorMessage } from '../../core/api-error';
-import { Registration } from '../../core/models';
+import { Registration, Workshop } from '../../core/models';
 import { RegistrationService } from '../../core/registration.service';
+import { WorkshopService } from '../../core/workshop.service';
 
 @Component({
   selector: 'app-registrations',
@@ -12,6 +13,8 @@ import { RegistrationService } from '../../core/registration.service';
 })
 export class RegistrationsComponent implements OnInit {
   registrations: Registration[] = [];
+  workshops: Workshop[] = [];
+  selectedWorkshopId = '';
   isLoading = true;
   errorMessage = '';
   successMessage = '';
@@ -20,6 +23,7 @@ export class RegistrationsComponent implements OnInit {
 
   constructor(
     private readonly registrationService: RegistrationService,
+    private readonly workshopService: WorkshopService,
     private readonly auth: AuthService,
   ) {}
 
@@ -27,16 +31,33 @@ export class RegistrationsComponent implements OnInit {
     return this.auth.currentUser?.role === 'formateur';
   }
 
+  get isAdmin(): boolean {
+    return this.auth.currentUser?.role === 'admin';
+  }
+
+  get workshopOptions(): Workshop[] {
+    return [...this.workshops].sort((left, right) =>
+      left.titre.localeCompare(right.titre, 'fr'),
+    );
+  }
+
+  get visibleRegistrations(): Registration[] {
+    return this.selectedWorkshopId
+      ? this.registrations.filter((registration) => registration.workshop_id === this.selectedWorkshopId)
+      : this.registrations;
+  }
+
   get activeCount(): number {
-    return this.registrations.filter((registration) => registration.status === 'inscrit').length;
+    return this.visibleRegistrations.filter((registration) => registration.status === 'inscrit').length;
   }
 
   get cancelledCount(): number {
-    return this.registrations.filter((registration) => registration.status === 'annule').length;
+    return this.visibleRegistrations.filter((registration) => registration.status === 'annule').length;
   }
 
   ngOnInit(): void {
     this.loadRegistrations();
+    this.loadWorkshops();
   }
 
   confirmCancellation(registration: Registration): void {
@@ -46,6 +67,13 @@ export class RegistrationsComponent implements OnInit {
 
   cancelConfirmation(): void {
     this.pendingCancelId = null;
+  }
+
+  onWorkshopFilterChange(event: Event): void {
+    const target = event.target;
+    if (target instanceof HTMLSelectElement) {
+      this.selectedWorkshopId = target.value;
+    }
   }
 
   cancelRegistration(registration: Registration): void {
@@ -83,6 +111,17 @@ export class RegistrationsComponent implements OnInit {
       error: (error: unknown) => {
         this.errorMessage = getApiErrorMessage(error, 'Impossible de charger les inscriptions.');
         this.isLoading = false;
+      },
+    });
+  }
+
+  private loadWorkshops(): void {
+    this.workshopService.list().subscribe({
+      next: (response) => {
+        this.workshops = response.data;
+      },
+      error: (error: unknown) => {
+        this.errorMessage = getApiErrorMessage(error, 'Impossible de charger les ateliers.');
       },
     });
   }

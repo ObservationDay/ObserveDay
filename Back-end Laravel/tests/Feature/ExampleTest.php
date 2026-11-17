@@ -58,5 +58,8 @@ class ExampleTest extends TestCase
 
         $this->postJson('/api/v1/ateliers', [])
             ->assertForbidden();
+
+        $this->getJson('/api/v1/integration/participants/'.Str::uuid().'/inscriptions')
+            ->assertForbidden();
     }
 }

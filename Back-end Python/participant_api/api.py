@@ -155,6 +155,19 @@ def show_workshop(workshop_id):
     return _proxy_laravel("GET", f"integration/ateliers/{workshop_id}")
 
 
+@api.get("/inscriptions")
+@jwt_required()
+def list_participant_registrations():
+    participant, error = _require_current_participant()
+    if error:
+        return error
+
+    return _proxy_laravel(
+        "GET",
+        f"integration/participants/{participant.id}/inscriptions",
+    )
+
+
 @api.post("/inscriptions")
 @jwt_required()
 def register_for_workshop():

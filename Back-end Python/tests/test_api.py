@@ -172,6 +172,38 @@ class ParticipantApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 401)
 
+    @patch("participant_api.laravel_client.requests.request")
+    def test_participant_can_list_only_their_laravel_registrations(self, request_mock):
+        created = self.create_participant()
+        participant_id = created.get_json()["participant"]["id"]
+        access_token = created.get_json()["access_token"]
+        upstream = Mock(status_code=200)
+        upstream.json.return_value = {"data": [], "meta": {"total": 0}}
+        request_mock.return_value = upstream
+
+        response = self.client.get(
+            "/api/v1/inscriptions",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"data": [], "meta": {"total": 0}})
+        request_mock.assert_called_once_with(
+            "GET",
+            f"http://laravel.test/api/v1/integration/participants/{participant_id}/inscriptions",
+            headers={
+                "Accept": "application/json",
+                "Authorization": "Bearer test-laravel-token",
+            },
+            json=None,
+            timeout=(3, 10),
+        )
+
+    def test_participant_registration_list_requires_authentication(self):
+        response = self.client.get("/api/v1/inscriptions")
+
+        self.assertEqual(response.status_code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()

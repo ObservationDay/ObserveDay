@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { getApiErrorMessage } from '../../core/api-error';
 import { ParticipantApiService } from '../../core/participant-api.service';
 import { ParticipantAuthService } from '../../core/participant-auth.service';
-import { Workshop } from '../../core/models';
+import { Registration, Workshop } from '../../core/models';
 
 @Component({
   selector: 'app-participant-workshops',
@@ -13,9 +13,12 @@ import { Workshop } from '../../core/models';
 })
 export class ParticipantWorkshopsComponent implements OnInit {
   workshops: Workshop[] = [];
+  myRegistrations: Registration[] = [];
   isLoading = true;
+  isLoadingRegistrations = false;
   pendingWorkshopId: string | null = null;
   errorMessage = '';
+  registrationsErrorMessage = '';
   successMessage = '';
 
   constructor(
@@ -26,6 +29,9 @@ export class ParticipantWorkshopsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadWorkshops();
+    if (this.auth.isAuthenticated) {
+      this.loadMyRegistrations();
+    }
   }
 
   availableSeats(workshop: Workshop): number {
@@ -53,6 +59,7 @@ export class ParticipantWorkshopsComponent implements OnInit {
         this.successMessage = `Votre inscription à « ${response.data.workshop?.titre ?? workshop.titre} » est confirmée.`;
         this.pendingWorkshopId = null;
         this.loadWorkshops();
+        this.loadMyRegistrations();
       },
       error: (error: unknown) => {
         this.errorMessage = getApiErrorMessage(
@@ -80,6 +87,25 @@ export class ParticipantWorkshopsComponent implements OnInit {
           'Python',
         );
         this.isLoading = false;
+      },
+    });
+  }
+
+  private loadMyRegistrations(): void {
+    this.isLoadingRegistrations = true;
+    this.registrationsErrorMessage = '';
+    this.api.listMyRegistrations().subscribe({
+      next: (response) => {
+        this.myRegistrations = response.data;
+        this.isLoadingRegistrations = false;
+      },
+      error: (error: unknown) => {
+        this.registrationsErrorMessage = getApiErrorMessage(
+          error,
+          'Impossible de charger vos inscriptions.',
+          'Python',
+        );
+        this.isLoadingRegistrations = false;
       },
     });
   }

@@ -15,6 +15,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 class IntegrationController extends Controller
 {
+    public function participantRegistrations(string $participantId): AnonymousResourceCollection
+    {
+        $registrations = Registration::query()
+            ->with(['workshop.trainer', 'participant'])
+            ->where('participant_id', $participantId)
+            ->orderByDesc('registered_at')
+            ->paginate(100);
+
+        return RegistrationResource::collection($registrations);
+    }
+
     public function workshops(): AnonymousResourceCollection
     {
         $workshops = Workshop::query()

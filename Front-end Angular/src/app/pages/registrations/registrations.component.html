@@ -15,7 +15,7 @@
 <section class="summary-grid" aria-label="Résumé des inscriptions">
   <article class="summary-card">
     <span class="summary-icon icon-blue" aria-hidden="true">◎</span>
-    <div><small>INSCRIPTIONS</small><strong>{{ registrations.length }}</strong></div>
+    <div><small>INSCRIPTIONS</small><strong>{{ visibleRegistrations.length }}</strong></div>
   </article>
   <article class="summary-card">
     <span class="summary-icon icon-green" aria-hidden="true">✓</span>
@@ -33,7 +33,18 @@
       <h2>Participants inscrits</h2>
       <p>Les listes sont filtrées selon votre rôle et vos ateliers.</p>
     </div>
-    <span class="panel-tag">{{ isTrainer ? 'MES ATELIERS' : 'TOUS LES ATELIERS' }}</span>
+    <select
+      *ngIf="isAdmin || isTrainer"
+      class="panel-tag workshop-filter"
+      aria-label="Filtrer les inscriptions par atelier"
+      [value]="selectedWorkshopId"
+      (change)="onWorkshopFilterChange($event)"
+    >
+      <option value="">{{ isTrainer ? 'MES ATELIERS' : 'TOUS LES ATELIERS' }}</option>
+      <option *ngFor="let workshop of workshopOptions" [value]="workshop.id">
+        {{ workshop.titre }}
+      </option>
+    </select>
   </div>
 
   <div class="loading-state" *ngIf="isLoading">
@@ -41,13 +52,13 @@
     <span>Chargement des inscriptions…</span>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && registrations.length === 0">
+  <div class="empty-state" *ngIf="!isLoading && visibleRegistrations.length === 0">
     <span class="empty-icon" aria-hidden="true">◎</span>
     <h3>Aucune inscription à afficher</h3>
     <p>Les inscriptions aux ateliers apparaîtront ici.</p>
   </div>
 
-  <div class="table-wrap" *ngIf="!isLoading && registrations.length">
+  <div class="table-wrap" *ngIf="!isLoading && visibleRegistrations.length">
     <table>
       <thead>
         <tr>
@@ -60,7 +71,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let registration of registrations">
+        <tr *ngFor="let registration of visibleRegistrations">
           <td>
             <div class="participant-cell">
               <span class="participant-avatar" aria-hidden="true">{{ registration.participant.nom_affiche.charAt(0) || 'P' }}</span>

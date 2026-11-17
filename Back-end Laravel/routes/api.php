@@ -47,6 +47,15 @@ Route::prefix('v1')->group(function (): void {
             });
 
         Route::prefix('integration')
+            ->middleware('abilities:registrations:read')
+            ->group(function (): void {
+                Route::get(
+                    '/participants/{participantId}/inscriptions',
+                    [IntegrationController::class, 'participantRegistrations'],
+                )->whereUuid('participantId');
+            });
+
+        Route::prefix('integration')
             ->middleware('abilities:registrations:write')
             ->group(function (): void {
                 Route::post('/inscriptions', [IntegrationController::class, 'register']);

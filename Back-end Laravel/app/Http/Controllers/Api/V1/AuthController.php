@@ -50,12 +50,14 @@ class AuthController extends Controller
 
     public function createPythonServiceToken(Request $request): JsonResponse
     {
+        $abilities = ['catalog:read', 'registrations:read', 'registrations:write'];
+
         return response()->json([
             'access_token' => $request->user()
-                ->createToken('python-service', ['catalog:read', 'registrations:write'])
+                ->createToken('python-service', $abilities)
                 ->plainTextToken,
             'token_type' => 'Bearer',
-            'abilities' => ['catalog:read', 'registrations:write'],
+            'abilities' => $abilities,
         ], 201);
     }
 }

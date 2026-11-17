@@ -17,6 +17,7 @@ Edit `.env`:
 - Set `DATABASE_URL` to the same PostgreSQL database used by Laravel. URL-encode special characters in the password.
 - Generate a private signing key, for example with `python -c "import secrets; print(secrets.token_urlsafe(48))"`, and set it as `JWT_SECRET_KEY`.
 - Create a Laravel integration token with an admin account using `POST /api/v1/auth/python-token`, then set the returned token as `LARAVEL_SERVICE_TOKEN`. Never expose this token to Angular or participants.
+- If you already created a token before adding the participant registration list, issue a new token so it includes the `registrations:read` ability.
 
 For a new database, apply the versioned schema migrations:
 
@@ -69,9 +70,10 @@ All endpoints return JSON under `/api/v1`:
 | `GET` | `/participants/me` | Return the authenticated participant |
 | `GET` | `/ateliers` | Proxy Laravel's available workshop catalog |
 | `GET` | `/ateliers/{workshop_id}` | Proxy one available Laravel workshop |
+| `GET` | `/inscriptions` | List the authenticated participant's registrations |
 | `POST` | `/inscriptions` | Register the authenticated participant through Laravel |
 
-Account creation accepts `nom`, `email`, `password`, and `password_confirmation`. Workshop registration accepts only `workshop_id`; Flask supplies the participant UUID and profile fields from the authenticated account, so clients cannot register another participant. Laravel enforces workshop capacity and duplicate-registration rules.
+Account creation accepts `nom`, `email`, `password`, and `password_confirmation`. Both participant registration endpoints require the participant JWT. Flask derives the participant identity from that JWT and proxies only that participant's registrations from Laravel. Workshop registration accepts only `workshop_id`; Flask supplies the participant UUID and profile fields from the authenticated account, so clients cannot register another participant. Laravel enforces workshop capacity and duplicate-registration rules.
 
 Example registration request:
 

@@ -32,7 +32,7 @@ The versioned API uses JSON under `/api/v1`. Create the first admin interactivel
 
 - Admin: manage `/formateurs` and create, update, or delete `/ateliers`.
 - Admin and trainers: list workshops, registrations, and participant references. Trainers only see their assigned workshops and related participants.
-- Python service: an admin can issue a limited token at `POST /api/v1/auth/python-token`. Use it for `GET /integration/ateliers`, `POST /integration/inscriptions`, and registration cancellation. The token must be kept server-side.
+- Python service: an admin can issue a limited token at `POST /api/v1/auth/python-token`. It grants `catalog:read`, `registrations:read`, and `registrations:write`; use it for the workshop catalog, a participant-scoped registration list, creating registrations, and cancellation. The token must be kept server-side. Reissue existing tokens to obtain the new read ability.
 
 Workshop registrations are transactional, capacity-checked, and unique per workshop/participant. Cancellation changes the status to `annule` and retains history.
 

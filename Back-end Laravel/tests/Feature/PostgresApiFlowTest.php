@@ -36,6 +36,19 @@ class PostgresApiFlowTest extends TestCase
             ->assertCreated()
             ->json('data');
 
+        $otherWorkshop = $this->withToken($adminToken)
+            ->postJson('/api/v1/ateliers', [
+                'titre' => 'Other participant API test',
+                'description' => 'Registration belongs to another participant.',
+                'starts_at' => now()->addDay()->toIso8601String(),
+                'ends_at' => now()->addDays(2)->toIso8601String(),
+                'capacity' => 1,
+                'status' => 'ouvert',
+                'trainer_id' => null,
+            ])
+            ->assertCreated()
+            ->json('data');
+
         $cancelledWorkshop = $this->withToken($adminToken)
             ->postJson('/api/v1/ateliers', [
                 'titre' => 'Cancelled API integration test',
@@ -49,10 +62,15 @@ class PostgresApiFlowTest extends TestCase
             ->assertCreated()
             ->json('data');
 
-        $serviceToken = $this->withToken($adminToken)
+        $serviceTokenResponse = $this->withToken($adminToken)
             ->postJson('/api/v1/auth/python-token')
             ->assertCreated()
-            ->json('access_token');
+            ->assertJsonPath('abilities', [
+                'catalog:read',
+                'registrations:read',
+                'registrations:write',
+            ]);
+        $serviceToken = $serviceTokenResponse->json('access_token');
 
         $this->withToken($serviceToken)
             ->postJson('/api/v1/ateliers', [])
@@ -67,12 +85,22 @@ class PostgresApiFlowTest extends TestCase
         $this->assertNotContains($cancelledWorkshop['id'], $catalogIds);
 
         $participantId = (string) Str::uuid();
+        $otherParticipantId = (string) Str::uuid();
         $registrationData = [
             'workshop_id' => $workshop['id'],
             'participant_id' => $participantId,
             'nom_affiche' => 'API participant',
             'email' => Str::uuid().'@example.test',
         ];
+
+        $this->withToken($serviceToken)
+            ->postJson('/api/v1/integration/inscriptions', [
+                'workshop_id' => $otherWorkshop['id'],
+                'participant_id' => $otherParticipantId,
+                'nom_affiche' => 'Other API participant',
+                'email' => Str::uuid().'@example.test',
+            ])
+            ->assertCreated();
 
         $registration = $this->withToken($serviceToken)
             ->postJson('/api/v1/integration/inscriptions', $registrationData)
@@ -101,5 +129,11 @@ class PostgresApiFlowTest extends TestCase
             ->postJson('/api/v1/integration/inscriptions', $registrationData)
             ->assertOk()
             ->assertJsonPath('data.status', 'inscrit');
+
+        $this->withToken($serviceToken)
+            ->getJson('/api/v1/integration/participants/'.$participantId.'/inscriptions')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.participant.participant_id', $participantId);
     }
 }

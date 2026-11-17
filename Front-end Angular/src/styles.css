@@ -185,6 +185,18 @@ a {
   letter-spacing: 0.1em;
 }
 
+.panel-tag.workshop-filter {
+  max-width: 220px;
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.panel-tag.workshop-filter:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -227,6 +239,11 @@ a {
   color: #5e7180;
   font-size: 9px;
   font-weight: 700;
+}
+
+.status-pill.status-cancelled {
+  background: #fff0ef;
+  color: var(--red);
 }
 
 .text-action {

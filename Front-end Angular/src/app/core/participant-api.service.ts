@@ -19,25 +19,40 @@ export class ParticipantApiService {
     );
   }
 
-  registerForWorkshop(workshopId: string): Observable<ResourceResponse<Registration>> {
-    const token = this.auth.token;
-    const headers = token
-      ? new HttpHeaders({ Authorization: `Bearer ${token}` })
-      : new HttpHeaders();
+  listMyRegistrations(): Observable<PaginatedResponse<Registration>> {
+    const request = this.http.get<PaginatedResponse<Registration>>(
+      `${PARTICIPANT_API_BASE_URL}/inscriptions`,
+      { headers: this.participantHeaders() },
+    );
 
-    return this.http
-      .post<ResourceResponse<Registration>>(
+    return this.clearSessionOnUnauthorized(request);
+  }
+
+  registerForWorkshop(workshopId: string): Observable<ResourceResponse<Registration>> {
+    const request = this.http.post<ResourceResponse<Registration>>(
         `${PARTICIPANT_API_BASE_URL}/inscriptions`,
         { workshop_id: workshopId },
-        { headers },
-      )
-      .pipe(
-        catchError((error: unknown) => {
-          if (error instanceof HttpErrorResponse && error.status === 401) {
-            this.auth.clearSession();
-          }
-          return throwError(() => error);
-        }),
+        { headers: this.participantHeaders() },
       );
+
+    return this.clearSessionOnUnauthorized(request);
+  }
+
+  private participantHeaders(): HttpHeaders {
+    const token = this.auth.token;
+    return token
+      ? new HttpHeaders({ Authorization: `Bearer ${token}` })
+      : new HttpHeaders();
+  }
+
+  private clearSessionOnUnauthorized<T>(request: Observable<T>): Observable<T> {
+    return request.pipe(
+      catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 401) {
+          this.auth.clearSession();
+        }
+        return throwError(() => error);
+      }),
+    );
   }
 }

@@ -14,6 +14,63 @@
 <div class="notice notice-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
 <div class="notice notice-success" role="status" *ngIf="successMessage">{{ successMessage }}</div>
 
+<section class="my-registrations" *ngIf="auth.isAuthenticated" aria-labelledby="my-registrations-title">
+  <div class="catalog-heading">
+    <div>
+      <p class="eyebrow">MON ESPACE</p>
+      <h2 id="my-registrations-title">Mes inscriptions</h2>
+      <p>Retrouvez les ateliers auxquels vous êtes inscrit.</p>
+    </div>
+    <span class="catalog-count" *ngIf="!isLoadingRegistrations">
+      {{ myRegistrations.length }} inscription{{ myRegistrations.length === 1 ? '' : 's' }}
+    </span>
+  </div>
+
+  <div class="notice notice-error" role="alert" *ngIf="registrationsErrorMessage">
+    {{ registrationsErrorMessage }}
+  </div>
+
+  <div class="loading-state" *ngIf="isLoadingRegistrations" role="status">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Chargement de vos inscriptions…</span>
+  </div>
+
+  <section class="workshop-grid" *ngIf="!isLoadingRegistrations && !registrationsErrorMessage && myRegistrations.length">
+    <article class="workshop-card" *ngFor="let registration of myRegistrations">
+      <div class="card-topline">
+        <span
+          class="status-pill"
+          [class.status-active]="registration.status === 'inscrit'"
+          [class.status-cancelled]="registration.status === 'annule'"
+        >
+          {{ registration.status === 'inscrit' ? 'Confirmée' : 'Annulée' }}
+        </span>
+        <span class="seat-count">Inscrit le {{ registration.registered_at | date:'d MMM y' }}</span>
+      </div>
+
+      <h3>{{ registration.workshop.titre }}</h3>
+      <p class="workshop-description">{{ registration.workshop.description }}</p>
+
+      <div class="workshop-details">
+        <div>
+          <span class="detail-label">DATE</span>
+          <strong>{{ registration.workshop.starts_at | date:'EEEE d MMMM y, HH:mm' }}</strong>
+        </div>
+        <div>
+          <span class="detail-label">FORMATEUR</span>
+          <strong>{{ registration.workshop.trainer?.nom || 'À confirmer' }}</strong>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="empty-state" *ngIf="!isLoadingRegistrations && !registrationsErrorMessage && myRegistrations.length === 0">
+    <span class="empty-icon" aria-hidden="true">◎</span>
+    <h3>Vous n’êtes inscrit à aucun atelier</h3>
+    <p>Vos prochaines inscriptions apparaîtront ici.</p>
+  </section>
+</section>
+
 <section class="catalog-heading">
   <div>
     <p class="eyebrow">LE CATALOGUE</p>

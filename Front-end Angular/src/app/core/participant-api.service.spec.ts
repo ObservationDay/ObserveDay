@@ -93,4 +93,26 @@ describe('ParticipantApiService', () => {
     expect(request.request.body).toEqual({ workshop_id: 'workshop-id' });
     request.flush({ data: { id: 'registration-id' } });
   });
+
+  it('loads the participant registration list with only the participant token', () => {
+    participantAuth.login({
+      email: 'participant@example.com',
+      password: 'participant-password',
+    }).subscribe();
+    httpMock.expectOne(`${PARTICIPANT_API_BASE_URL}/auth/login`).flush({
+      access_token: 'participant-token',
+      token_type: 'Bearer',
+      participant: {
+        id: 'participant-id',
+        nom: 'Participant Test',
+        email: 'participant@example.com',
+      },
+    });
+
+    api.listMyRegistrations().subscribe();
+    const request = httpMock.expectOne(`${PARTICIPANT_API_BASE_URL}/inscriptions`);
+    expect(request.request.method).toBe('GET');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer participant-token');
+    request.flush({ data: [], links: {}, meta: { total: 0 } });
+  });
 });
