@@ -8,7 +8,7 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The appli
 
 ## Participant interface
 
-The public participant area is available at `/participant/ateliers`; the root URL redirects there. Participants create accounts and sign in through Flask at `http://127.0.0.1:5000/api/v1`. Angular calls Laravel directly for the workshop catalog and enrollment at `http://127.0.0.1:8000/api/v1`; Laravel verifies the participant JWT using the shared server-side secret. Flask continues to provide the participant's registration history through a restricted server token that is never exposed to Angular.
+The root URL redirects to `/participant/ateliers`. Participants create accounts at `/participant/creer-compte` and sign in at `/participant/connexion`; both use Flask's `/api/v1/participants` and `/api/v1/auth/login` endpoints. Angular calls Laravel directly for the workshop catalog and enrollment at `http://127.0.0.1:8000/api/v1`; Laravel verifies the participant JWT using the shared server-side secret. Flask continues to provide registration history through a restricted server token that is never exposed to Angular.
 
 For the full flow, start Laravel and Flask in separate terminals before starting Angular:
 
@@ -26,7 +26,7 @@ cd "Front-end Angular"
 npm start
 ```
 
-The staff interface remains available at `/login`.
+Administrators and trainers sign in at `/login` using Laravel's `/api/v1/auth/login` endpoint. The protected staff workspace is under `/app`; participant and staff sessions are independent.
 
 ## End-to-end participant test
 

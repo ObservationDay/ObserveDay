@@ -12,6 +12,21 @@ les inscriptions de leurs participants.
 | Formateur | Consulter ses ateliers et les participants inscrits à ceux-ci. |
 | Participant | Créer un compte, se connecter, consulter les ateliers disponibles, s’y inscrire et suivre ses inscriptions. |
 
+## Connexion et accès
+
+- **Administrateur et formateur**: utilisez `http://127.0.0.1:4200/login`.
+  Cette page authentifie les comptes d’équipe auprès de l’API Laravel. Le
+  premier administrateur est créé avec `php artisan app:create-admin`; les
+  comptes formateur sont également gérés côté Laravel.
+- **Participant**: créez un compte sur
+  `http://127.0.0.1:4200/participant/creer-compte`, puis connectez-vous sur
+  `http://127.0.0.1:4200/participant/connexion`. La création de compte et la
+  connexion utilisent l’API Flask. Le catalogue est accessible sur
+  `/participant/ateliers`; l’inscription aux ateliers passe ensuite par Laravel.
+- La racine `http://127.0.0.1:4200/` redirige vers les ateliers participants.
+  Les espaces d’équipe sous `/app` sont protégés et réservés aux administrateurs
+  et formateurs. Les sessions participant et équipe sont indépendantes.
+
 Le [MCD](<./MCD_Plateforme_Ateliers.pdf>) présente les entités, leurs relations
 et la séparation des données entre les deux API.
 
