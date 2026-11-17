@@ -12,6 +12,15 @@ py -3.12 -m venv .venv
 Copy-Item .env.example .env
 ```
 
+`requirements.txt` is the hash-locked dependency file generated from
+`requirements.in`. To update dependencies, edit `requirements.in`, install
+`pip-tools`, then regenerate the lock:
+
+```powershell
+python -m pip install pip-tools
+python -m piptools compile --generate-hashes --output-file=requirements.txt requirements.in
+```
+
 Edit `.env`:
 
 - Set `DATABASE_URL` to the same PostgreSQL database used by Laravel. URL-encode special characters in the password.

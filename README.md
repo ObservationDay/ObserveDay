@@ -51,7 +51,7 @@ flowchart LR
 | --- | --- | --- |
 | Angular, TypeScript, RxJS | Angular 16.2, TypeScript 5.1, RxJS 7.8 | Angular 16 est une version autorisée par le sujet et fournit le routage, les services HTTP, les formulaires réactifs et les composants modulaires requis. |
 | Node.js | 18.20 | Environnement compatible avec la version Angular retenue. |
-| Laravel, PHP, Sanctum | Laravel 13, PHP 8.3+, Sanctum 4 | Laravel gère l’API métier, les migrations, la validation, l’ORM Eloquent et l’authentification des équipes. |
+| Laravel, PHP, Sanctum | Laravel 13, PHP 8.4.1+, Sanctum 4 | Laravel gère l’API métier, les migrations, la validation, l’ORM Eloquent et l’authentification des équipes. PHP 8.4.1 est requis par les versions Symfony verrouillées. |
 | Flask, Python, SQLAlchemy | Flask 3.1, Python 3.12, SQLAlchemy 2 | Flask fournit une API légère pour les participants; SQLAlchemy persiste leurs comptes avec un ORM. Flask-Migrate/Alembic versionne le schéma Python. |
 | Requests | 2.32 | Requests permet à Flask d’appeler l’API Laravel avec un délai d’attente et un jeton serveur. |
 | PostgreSQL | 17 | Base relationnelle commune, avec des schémas et des migrations séparés selon le propriétaire des données. |
@@ -63,7 +63,7 @@ sont des versions anciennes à prendre en compte pour un nouveau projet.
 ## Prérequis
 
 - Windows PowerShell (les commandes ci-dessous sont prévues pour Windows).
-- PHP 8.3 ou supérieur et Composer.
+- PHP 8.4.1 ou supérieur et Composer.
 - Python 3.12.
 - Node.js 18 et npm.
 - PostgreSQL 17 en fonctionnement.
